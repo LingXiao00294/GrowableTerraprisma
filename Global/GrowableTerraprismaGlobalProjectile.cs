@@ -22,6 +22,11 @@ namespace GrowableTerraprisma.Global
             {
                 projectile.timeLeft = 2;
             }
+            else
+            {
+                // 原版 empressBlade 可能已将 timeLeft 设为 2，直接杀死以覆盖
+                projectile.Kill();
+            }
         }
 
         public override void OnHitNPC(Projectile projectile, NPC target, NPC.HitInfo hit, int damageDone)

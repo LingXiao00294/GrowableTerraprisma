@@ -36,17 +36,58 @@ namespace GrowableTerraprisma.Players
         {
         }
 
-        // 复刻原版 UpdateBuffs 中 buffType == 322 分支的模式：
-        //   ownedProjectileCounts[946] > 0 → empressBlade = true, buffTime = 18000
+        // 清理因 gtp 弹幕（同为 type 946）而残留的原版 EmpressBlade buff
+        public override void PostUpdate()
+        {
+            if (Player.HasBuff(BuffID.EmpressBlade))
+            {
+                bool hasUnmarked = false;
+                foreach (Projectile proj in Main.ActiveProjectiles)
+                {
+                    if (proj.owner == Player.whoAmI
+                        && proj.type == ProjectileID.EmpressBlade
+                        && proj.localAI[2] != 1f
+                        && proj.active
+                        && proj.minion)
+                    {
+                        hasUnmarked = true;
+                        break;
+                    }
+                }
+                if (!hasUnmarked)
+                {
+                    Player.ClearBuff(BuffID.EmpressBlade);
+                }
+            }
+        }
+
+        // 手动统计 gtp 弹幕，避免 ownedProjectileCounts[946] 混入原版弹幕
         public override void PostUpdateBuffs()
         {
             int buffType = ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>();
             if (!Player.HasBuff(buffType))
                 return;
 
-            if (Player.ownedProjectileCounts[ProjectileID.EmpressBlade] > 0)
+            bool hasGtpProj = false;
+            foreach (Projectile proj in Main.ActiveProjectiles)
+            {
+                if (proj.owner == Player.whoAmI
+                    && proj.type == ProjectileID.EmpressBlade
+                    && proj.localAI[2] == 1f
+                    && proj.active)
+                {
+                    hasGtpProj = true;
+                    break;
+                }
+            }
+
+            if (hasGtpProj)
             {
                 Player.buffTime[Player.FindBuffIndex(buffType)] = 18000;
+            }
+            else
+            {
+                Player.DelBuff(Player.FindBuffIndex(buffType));
             }
         }
 
