@@ -1,1 +1,13 @@
+# Windows 系统文件
 **/desktop.ini
+*Zone.Identifier
+
+# 构建产物
+obj/
+bin/
+*.tmod
+
+# IDE
+.vs/
+.idea/
+*.user
