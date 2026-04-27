@@ -21,7 +21,7 @@
 
 - **类名**: `GrowableTerraprismaItem : ModItem`
 - **获取方式**: 初始物品。角色创建时通过 `ModPlayer.AddStartingItems()` 放入背包，与铜工具一同发放。
-- **基础属性**: 初始伤害约为原版泰拉棱镜的 60%，随成长逐步提升，上限可超过原版。
+- **基础属性**: 初始伤害 15，随成长逐步提升。
 - **弹幕**: 直接生成**原版泰拉棱镜弹幕**（`ProjectileID.EmpressBlade`，type 946），不定义自定义弹幕类。
   ```csharp
   Item.shoot = ProjectileID.EmpressBlade;
@@ -55,53 +55,60 @@
 
 ### 2.2  数值缩放公式
 
-不设硬上限，使用**对数递减**确保成长不会过快。多维度缩放：基础伤害、暴击率、暴击倍率、攻击速度。
+不设硬上限，使用**对数递减**确保后期成长不会过快。
+仅缩放基础伤害（移除暴击/攻速维度，后续可加回）。
 
 ```
 growthPoints = minionKillCounter + (uniqueBossesDefeated × 25)
 
-// 基础伤害倍率 — 对数递减，无上限但边际收益逐步降低
-damageMultiplier = 1.0 + Math.Log(1 + growthPoints * 0.005) * 0.5
-
-// 暴击率 — 满成长后约 +15%
-critChanceBonus = Math.Min(growthPoints / 66.0, 15.0)
-
-// 暴击倍率 — 满成长后约从 2× 升至 2.5×
-critDamageMultiplier = 2.0 + Math.Log(1 + growthPoints * 0.002) * 0.3
-
+damageMultiplier = 1.0 + Math.Log(1 + growthPoints * 0.004) * 0.5
 // 攻击速度 — 满成长后约 +20%
 attackSpeedMultiplier = 1.0 + Math.Log(1 + growthPoints * 0.003) * 0.2
 ```
 
-**各时期参考数值**（以击杀 500 小怪 + 10 Boss ≈ 750 points 为例）：
+**各时期参考数值**（gtprisma 基础伤害 15，事件中点数增加极快）：
 
-| 时期 | 大致 growthPoints | 伤害倍率 | 暴击率 | 暴击倍率 | 攻速 |
-|----- |-------------------|---------|--------|---------|------|
-| 困难模式前 | ~100 | 1.2× | +1.5% | 2.05× | 1.03× |
-| 困难模式 | ~300 | 1.5× | +4.5% | 2.12× | 1.08× |
-| 月后 | ~600 | 1.7× | +9.1% | 2.18× | 1.13× |
-| 灾厄月后 | ~1500 | 1.9× | +15% | 2.3× | 1.17× |
-| 灾厄终局 | ~4000 | 2.1× | +15% | 2.45× | 1.2× |
+| 时期 | 大致 growthPoints | 伤害倍率 | 实际伤害 |
+|----- |-------------------|---------|---------|
+| 开局 | 0 | 1.00× | 15 |
+| 困难模式前 | ~2000 | 2.10× | 31 |
+| 困难模式 | ~10000 | 2.86× | 43 |
+| 月后 | ~20000 | 3.20× | 48 |
+| 灾厄终局 | ~50000 | 3.65× | 55 |
 
-- gtprisma：在较低基础伤害上应用四个乘数。
-- uprisma：在较高基础伤害上应用四个乘数，且随击败特定 Boss 解锁新行为。
+- gtprisma：在较低基础伤害上应用伤害倍率。
+- uprisma：在较高基础伤害上应用伤害倍率，且随击败特定 Boss 解锁新行为。
 
 ### 2.3  击杀追踪
 
-`GrowableTerraprismaGlobalProjectile : GlobalProjectile`:
-- `OnHitNPC` — 若弹幕属于持有 gtprisma/uprisma 的玩家，且该次命中为致死伤害，增加 `minionKillCounter`。
+**概述**：分两路追踪 — 弹幕致死命中记录小怪击杀，Boss 死亡时检查参与战斗的玩家记录 Boss 击败。
 
-`GrowableTerraprismaGlobalNPC : GlobalNPC`:
-- `OnKill` — 若该 NPC 为 Boss（`npc.boss == true`）且击杀者是持有 gtprisma/uprisma 的玩家，将 `npc.type` 加入 `defeatedBossTypes` 集合。
-- **特定小 Boss**：以下非 Boss NPC 同样计入（与灾厄一致的小 Boss 定义）：
+**小怪击杀** — `GrowableTerraprismaGlobalProjectile.OnHitNPC`：
+- 仅处理 `localAI[2] == 1f`（gtprisma 标记）的 EmpressBlade 弹幕
+- 若 `target.life <= 0`（致死）且 `!target.friendly`（非城镇 NPC/小动物），`minionKillCounter++`
+
+**Boss/小Boss 击败** — `GrowableTerraprismaGlobalNPC.OnKill`：
+- 遍历所有活跃玩家，同时满足三个条件则记录：
+  1. 玩家持有 gtprisma buff（`HasBuff`）
+  2. 玩家参与过对该 NPC 的战斗（`npc.playerInteraction[i] == true`）
+  3. NPC 是 Boss 或小 Boss
+- 不依赖弹幕致死一击 — 鞭子补刀也能正确记录
+- **多体节 Boss**：通过 `npc.realLife` 追溯头部 type，HashSet 自动去重
+
+**小 Boss 列表**：
   - `NPCID.IceGolem`（冰雪巨人）
   - `NPCID.SandElemental`（沙元素）
-  - `NPCID.Dreadnautilus`（恐惧鹦鹉螺）
+  - `NPCID.BloodNautilus`（恐惧鹦鹉螺，内部名 BloodNautilus）
   - `NPCID.PirateShip`（荷兰飞盗船）
   - `NPCID.Pumpking`（南瓜王）
   - `NPCID.IceQueen`（冰雪女王）
   - `NPCID.MartianSaucerCore`（火星飞碟）
-  - 灾厄 mod 中 `npc.boss == false` 但被视为 mini-boss 的 NPC（通过配置列表扩展）。
+
+**buff-弹幕生命周期**（复刻原版 `buffType == 322` 模式）：
+- `GrowableTerraprismaPlayer.gtprismaMinionActive` — 计算属性，等价于玩家是否持有 gtprisma buff
+- `GrowableTerraprismaPlayer.PostUpdateBuffs()` — buff 存在 + `ownedProjectileCounts[946] > 0` → `buffTime = 18000`
+- `GrowableTerraprismaGlobalProjectile.PostAI()` — `gtprismaMinionActive == true` → `timeLeft = 2`（仅 `localAI[2] == 1f`）
+- 取消 buff → `gtprismaMinionActive` 变 false → 弹幕 2 帧后自然消亡
 
 ### 2.4  数值成长视觉反馈
 

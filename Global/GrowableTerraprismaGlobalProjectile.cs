@@ -5,12 +5,6 @@ using GrowableTerraprisma.Players;
 
 namespace GrowableTerraprisma.Global
 {
-    /// <summary>
-    /// 为 gtprisma 生成的 EmpressBlade 弹幕提供生命周期管理。
-    /// 复刻原版模式：player.empressBlade → timeLeft = 2，
-    /// 替换为 gtPlayer.gtprismaMinionActive → timeLeft = 2。
-    /// 仅处理 localAI[2] == 1f 的弹幕（gtprisma 标记），不影响原版泰拉棱镜。
-    /// </summary>
     public class GrowableTerraprismaGlobalProjectile : GlobalProjectile
     {
         public override bool AppliesToEntity(Projectile projectile, bool lateInstantiation)
@@ -28,6 +22,23 @@ namespace GrowableTerraprisma.Global
             {
                 projectile.timeLeft = 2;
             }
+        }
+
+        public override void OnHitNPC(Projectile projectile, NPC target, NPC.HitInfo hit, int damageDone)
+        {
+            if (projectile.localAI[2] != 1f)
+                return;
+            if (target.life > 0)
+                return;
+            if (target.friendly)
+                return;
+
+            int owner = projectile.owner;
+            if (owner < 0 || owner >= Main.maxPlayers)
+                return;
+
+            var gtPlayer = Main.player[owner].GetModPlayer<GrowableTerraprismaPlayer>();
+            gtPlayer.minionKillCounter++;
         }
     }
 }

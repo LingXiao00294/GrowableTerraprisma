@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 可成长泰拉棱镜（Growable Terraprisma）的 tModLoader mod。详细设计见 `DESIGN.md`。
 
+## 工作约定
+
+- **每次代码修改必须同步更新 `DESIGN.md`**：增加/修改功能时更新对应章节，修复 bug 时补充实现细节。保持设计文档始终反映实际代码状态。
+
 ## 构建与加载
 
 - **不使用命令行构建**。项目文件已链接到 tModLoader 的 `ModSources` 目录，无需移动。
@@ -19,6 +23,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 泰拉瑞亚反编译源码 | `~/projects/terraria/` | 原版 AI/渲染/物品实现 |
 | tModLoader | `~/projects/Mods/terraria_mods/tModLoader/` | tModLoader API、ExampleMod 参考 |
 | 灾厄 (Calamity) | `~/projects/Mods/terraria_mods/CalamityModPublic/` | 灾厄 Boss NPC type、兼容参考 |
+
+## tModLoader wiki
+
+[tModLoader wiki](https://github.com/tModLoader/tModLoader/wiki)
 
 ## 原版泰拉棱镜关键信息
 
@@ -88,7 +96,7 @@ GrowableTerraprisma/
 | 阶段 | 描述 | 状态 |
 |------|------|------|
 | 1 | gtprisma + Buff + ModPlayer | ✅ 已完成 |
-| 2 | 击杀追踪 (GlobalProjectile + GlobalNPC) | ⬜ 待实现 |
+| 2 | 击杀追踪 (GlobalProjectile + GlobalNPC) | ✅ 已完成 |
 | 3 | 数值成长 + tooltip | ✅ 已包含在阶段1 |
 | 4 | uprisma + 合成 + 自定义弹幕 | ⬜ 待实现 |
 | 5 | 行为接口 + 原版 Boss 行为 | ⬜ 待实现 |
@@ -97,12 +105,15 @@ GrowableTerraprisma/
 
 ### 已创建文件
 
-- `Content/Items/GrowableTerraprismaItem.cs` — gtprisma 物品
-- `Content/Items/GrowableTerraprismaItem.png` — 物品贴图（彩虹剑形占位图，需替换为正式贴图）
+- `Content/Items/GrowableTerraprismaItem.cs` — gtprisma 物品，base damage 15，成长系数 0.004
+- `Content/Items/GrowableTerraprismaItem.png` — 物品贴图（原版 Terraprisma 贴图，从 wiki webp 转换）
 - `Content/Buffs/GrowableTerraprismaBuff.cs` — gtprisma 召唤栏 buff
-- `Content/Buffs/GrowableTerraprismaBuff.png` — Buff 图标（彩虹圆占位图，需替换为正式贴图）
-- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，存储击杀计数/Boss击败集合，通过 `AddStartingItems` 发放初始物品
+- `Content/Buffs/GrowableTerraprismaBuff.png` — Buff 图标（原版 Terraprisma buff 贴图，从 wiki webp 转换）
+- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，击杀计数/Boss击败集合/初始物品/buff生命周期
+- `Global/GrowableTerraprismaGlobalProjectile.cs` — 弹幕生命周期（PostAI）+ 小怪击杀追踪（OnHitNPC），仅处理 localAI[2]==1f
+- `Global/GrowableTerraprismaGlobalNPC.cs` — Boss/小Boss 击败追踪（OnKill），通过 playerInteraction 判断参战
+- `scripts/convert_webp.py` — webp→png 转换脚本（uv + Pillow）
 
 ### 下一步
 
-Phase 2: 实现 `GrowableTerraprismaGlobalProjectile` (OnHitNPC 追踪击杀) 和 `GrowableTerraprismaGlobalNPC` (OnKill 追踪 Boss/小Boss 击败)。
+Phase 4: uprisma + 合成配方 + 自定义弹幕（UltraTerraprismaProjectile）。

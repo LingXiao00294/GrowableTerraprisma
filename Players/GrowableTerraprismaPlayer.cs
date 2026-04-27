@@ -14,15 +14,14 @@ namespace GrowableTerraprisma.Players
         public HashSet<int> defeatedBossTypes = new();
         public HashSet<int> defeatedMiniBossTypes = new();
 
-        // 复刻原版 empressBlade 模式：buff ↔ 弹幕 双向往返
-        public bool gtprismaMinionActive;
-
-        public bool gtprismaMinionActive => Player.HasBuff(ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>());
+        // 由 buff 存在性计算，复刻原版 empressBlade 模式
+        public bool gtprismaMinionActive =>
+            Player.HasBuff(ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>());
 
         public int UniqueBossesDefeated => defeatedBossTypes.Count;
         public int UniqueMiniBossesDefeated => defeatedMiniBossTypes.Count;
         public float GrowthPoints => minionKillCounter + (UniqueBossesDefeated + UniqueMiniBossesDefeated) * 25;
-        public float DamageMultiplier => 1f + MathF.Log(1 + GrowthPoints * 0.005f) * 0.5f;
+        public float DamageMultiplier => 1f + MathF.Log(1 + GrowthPoints * 0.004f) * 0.5f;
 
         public override IEnumerable<Item> AddStartingItems(bool mediumCoreDeath)
         {
@@ -35,7 +34,6 @@ namespace GrowableTerraprisma.Players
 
         public override void ResetEffects()
         {
-            gtprismaMinionActive = false;
         }
 
         // 复刻原版 UpdateBuffs 中 buffType == 322 分支的模式：
@@ -48,7 +46,6 @@ namespace GrowableTerraprisma.Players
 
             if (Player.ownedProjectileCounts[ProjectileID.EmpressBlade] > 0)
             {
-                gtprismaMinionActive = true;
                 Player.buffTime[Player.FindBuffIndex(buffType)] = 18000;
             }
         }

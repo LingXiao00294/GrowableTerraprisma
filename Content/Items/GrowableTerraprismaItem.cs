@@ -13,7 +13,7 @@ namespace GrowableTerraprisma.Content.Items
     {
         public override void SetDefaults()
         {
-            Item.damage = 54;
+            Item.damage = 15;
             Item.DamageType = DamageClass.Summon;
             Item.mana = 10;
             Item.width = 26;
@@ -40,7 +40,6 @@ namespace GrowableTerraprisma.Content.Items
             player.AddBuff(Item.buffType, 2);
             var proj = Projectile.NewProjectileDirect(source, player.Center, Vector2.Zero, type, scaledDamage, knockback, player.whoAmI);
             proj.originalDamage = scaledDamage;
-            proj.localAI[2] = 1f;  // gtprisma 标记，供 GlobalProjectile 识别
             proj.localAI[2] = 1f; // 标记此弹幕由 gtprisma 生成
             return false;
         }
