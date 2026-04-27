@@ -38,7 +38,11 @@
   - 材料: 1× 原版泰拉棱镜（不消耗 gtprisma）
   - 条件: `NPC.downedEmpressOfLight` AND 玩家成长点数达到阈值
 - **基础属性**: 基础伤害约为原版泰拉棱镜的 1.3 倍。
-- **弹幕**: 自定义弹幕（`UltraTerraprismaProjectile`），在原版 EmpressBlade AI 基础上叠加可插拔行为层。
+- **弹幕**: 自定义弹幕（`UltraTerraprismaProjectile : ModProjectile`）。
+  - 原版 AI 复用：`Projectile.aiStyle = 156`，运动/索敌/环形排列全部复用原版 `AI_156_BatOfLight`
+  - 行为叠加层在 `PostAI()` 中执行，不替换原版逻辑
+  - 参考灾厄 `CelestialAxeMinion` 模式：buff 直接在弹幕 `AI()` 中 `AddBuff(3600)` 维持，比当前 gtprisma 的 `GlobalProjectile.PostAI` 更干净
+- **与 gtprisma 对比**：gtprisma 因为是原版弹幕（type 946），必须通过 `GlobalProjectile.PostAI` 外挂；uprisma 是自有 `ModProjectile`，可直接在类内完成所有逻辑
 - **数值成长**: 继承并继续 gtprisma 的数值成长（击杀计数 + Boss 击败计数转移至 uprisma）。uprisma 自身继续累积。
 - **行为成长**: 击败**特定 Boss**解锁对应 AI 行为（见 §3）。行为是原版 AI 的**叠加层**，不替换原版逻辑。
 
