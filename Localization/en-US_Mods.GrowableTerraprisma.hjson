@@ -1,2 +1,13 @@
-# This file will automatically update with entries for new content after a build and reload.
+Items: {
+	GrowableTerraprismaItem: {
+		DisplayName: Growable Terraprisma Item
+		Tooltip: ""
+	}
+}
 
+Buffs: {
+	GrowableTerraprismaBuff: {
+		Description: Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.Description
+		DisplayName: Growable Terraprisma Buff
+	}
+}
