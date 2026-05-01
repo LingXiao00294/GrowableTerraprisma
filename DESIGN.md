@@ -22,12 +22,14 @@
 - **类名**: `GrowableTerraprismaItem : ModItem`
 - **获取方式**: 初始物品。角色创建时通过 `ModPlayer.AddStartingItems()` 放入背包，与铜工具一同发放。
 - **基础属性**: 初始伤害 15，随成长逐步提升。
-- **弹幕**: 直接生成**原版泰拉棱镜弹幕**（`ProjectileID.EmpressBlade`，type 946），不定义自定义弹幕类。
+- **弹幕**: 自定义弹幕 `GrowableTerraprismaProjectile : ModProjectile`，完整移植原版 EmpressBlade（type 946）的 AI 和渲染逻辑。
   ```csharp
-  Item.shoot = ProjectileID.EmpressBlade;
+  Item.shoot = ModContent.ProjectileType<GrowableTerraprismaProjectile>();
   ```
-- **AI**: 完全原版 — `aiStyle 156`（BatOfLight），`EmpressBladeDrawer` 顶点条带渲染，`GetFairyQueenWeaponsColor` 彩虹色调。
-- **成长**: 纯数值成长 — 伤害随召唤物击杀数和 Boss 击败数提高。无阶段，无新行为。
+- **AI**: 完整移植原版 `AI_156_BatOfLight` + `AI_156_Think` 状态机（空闲环形排列 → 锁定目标 → 弧线接近 → 冲刺）。不使用 `aiStyle = 156`，而是将原版代码改写为 ModProjectile 自有方法。
+- **渲染**: 移植原版 `EmpressBladeDrawer` 顶点条带拖尾 + `DrawProj_EmpressBlade` 精灵绘制（残影 + 辉光），使用 `GameShaders.Misc["EmpressBlade"]` 着色器和 `GetFairyQueenWeaponsColor()` 彩虹色调循环。
+- **buff 生命周期**: 采用灾厄 `CelestialAxeMinion` 模式 — 弹幕 AI 中 `player.AddBuff(buffType, 3600)` 续期，buff `Update()` 中检查 `ownedProjectileCounts` 维持 bool，`ResetEffects` 中重置 bool。
+- **成长**: 纯 Boss 击败伤害加成 — 击败 Boss 直接增加 `Item.damage`（通过 `ModifyWeaponDamage` 追加到计算基底，兼容重铸和装备加成）。无击杀点数，无阶段。
 - **成长数据**: 存储在 `GrowableTerraprismaPlayer`（ModPlayer）上。掉落、交易、死亡不丢失。
 - **合成解锁**: 玩家击败光之女皇 AND gtprisma 成长点数达到阈值后，解锁 uprisma 合成配方。
 
@@ -42,7 +44,7 @@
   - 原版 AI 复用：`Projectile.aiStyle = 156`，运动/索敌/环形排列全部复用原版 `AI_156_BatOfLight`
   - 行为叠加层在 `PostAI()` 中执行，不替换原版逻辑
   - 参考灾厄 `CelestialAxeMinion` 模式：buff 直接在弹幕 `AI()` 中 `AddBuff(3600)` 维持，比当前 gtprisma 的 `GlobalProjectile.PostAI` 更干净
-- **与 gtprisma 对比**：gtprisma 因为是原版弹幕（type 946），必须通过 `GlobalProjectile.PostAI` 外挂；uprisma 是自有 `ModProjectile`，可直接在类内完成所有逻辑
+- **与 gtprisma 对比**：gtprisma 侧重功能性成长（光照、拾取、移速），uprisma 侧重战斗行为成长（台风弹幕、残影、debuff）。两者都是自有 `ModProjectile`，互不依赖
 - **数值成长**: 继承并继续 gtprisma 的数值成长（击杀计数 + Boss 击败计数转移至 uprisma）。uprisma 自身继续累积。
 - **行为成长**: 击败**特定 Boss**解锁对应 AI 行为（见 §3）。行为是原版 AI 的**叠加层**，不替换原版逻辑。
 
@@ -50,75 +52,89 @@
 
 ## 2. 数值成长系统
 
-### 2.1  成长来源（两物品共用）
-
-| 来源                   | 速率                     | 存储位置            |
-|----------------------- |------------------------- |-------------------- |
-| 召唤物击杀（任意 NPC）  | +1 每击杀                | Per-player（ModPlayer） |
-| Boss 击败               | +25 每个独特 Boss NPC ID | Per-player（ModPlayer） |
-
-### 2.2  数值缩放公式
-
-不设硬上限，使用**对数递减**确保后期成长不会过快。
-仅缩放基础伤害（移除暴击/攻速维度，后续可加回）。
+**纯 Boss 基础伤害**。Boss 加成直接叠加到 `Item.damage`（尚未受装备/前缀加成的基础值），面板显示与实际伤害一致。
 
 ```
-growthPoints = minionKillCounter + (uniqueBossesDefeated × 25)
-
-damageMultiplier = 1.0 + Math.Log(1 + growthPoints * 0.004) * 0.5
-// 攻击速度 — 满成长后约 +20%
-attackSpeedMultiplier = 1.0 + Math.Log(1 + growthPoints * 0.003) * 0.2
+最终伤害 = (15 + BossesBaseBonus) × 装备加成 × 前缀
 ```
 
-**各时期参考数值**（gtprisma 基础伤害 15，事件中点数增加极快）：
+### 2.1  Boss 基础伤害（9 阶段）
 
-| 时期 | 大致 growthPoints | 伤害倍率 | 实际伤害 |
-|----- |-------------------|---------|---------|
-| 开局 | 0 | 1.00× | 15 |
-| 困难模式前 | ~2000 | 2.10× | 31 |
-| 困难模式 | ~10000 | 2.86× | 43 |
-| 月后 | ~20000 | 3.20× | 48 |
-| 灾厄终局 | ~50000 | 3.65× | 55 |
+后期 Boss 加成远高于前期。末尾两阶段（神明吞噬者+）数值大幅跳升，匹配灾厄终局膨胀。
 
-- gtprisma：在较低基础伤害上应用伤害倍率。
-- uprisma：在较高基础伤害上应用伤害倍率，且随击败特定 Boss 解锁新行为。
+| 阶段 | 加成 | 原版 Boss | 灾厄 Boss（条件加载） |
+|------|------|----------|---------------------|
+| 1 | +3 | 史莱姆王、克苏鲁之眼、EoW/BoC | 荒漠灾虫、菌生蟹 |
+| 2 | +5 | 蜂王、骷髅王、独眼巨鹿、血肉墙 | 腐巢意志/血肉宿主、史莱姆之神 |
+| 3 | +8 | 史莱姆皇后、毁灭者、双子魔眼、机械骷髅王 | 渊海灾虫、硫磺火元素、极地之灵 |
+| 4 | +15 | 世纪之花 | 灾厄之影、利维坦/阿娜希塔、白金星舰 |
+| 5 | +25 | 石巨人、猪鲨、光之女皇、拜月教徒、月亮领主 | 瘟疫使者歌莉娅、毁灭魔像、星神游龙 |
+| 6 | +50 | — | 亵渎守卫、痴愚金龙、亵渎天神 |
+| 7 | +100 | — | 风暴编织者、无尽虚空、西格纳斯、噬魂幽花、硫海遗爵 |
+| 8 | +200 | — | 神明吞噬者、犽戎 |
+| 9 | +400 | — | 星流巨械（4体）、至尊灾厄、始源妖龙 |
 
-### 2.3  击杀追踪
+**数值预测**（原版 + 灾厄全 Boss，gtprisma）：
+- 阶段 1-2（困难模式前）：~11 Boss → +15  +30  +30  = **+75**
+- 阶段 3-4（困难模式）：~12 Boss → +56  +75  = **+131**
+- 阶段 5（月后）：8 Boss → **+200**
+- 阶段 6（亵渎）：3 Boss → **+150**
+- 阶段 7（噬魂）：5 Boss → **+500**
+- 阶段 8（神明吞噬者+）：2 Boss → **+400**
+- 阶段 9（终局）：6 Boss → **+2400**
+- 基础 15 + 75 + 131 + 200 + 150 + 500 + 400 + 2400 = **3871**
+- uprisma ×1.3 = **5032**（匹配灾厄终局水平）
 
-**概述**：分两路追踪 — 弹幕致死命中记录小怪击杀，Boss 死亡时检查参与战斗的玩家记录 Boss 击败。
+未纳入列表的普通 Boss 默认 +3（阶段一加成）。uprisma 基础伤害 = gtprisma 基础伤害 × 1.3。
 
-**小怪击杀** — `GrowableTerraprismaGlobalProjectile.OnHitNPC`：
-- 仅处理 `localAI[2] == 1f`（gtprisma 标记）的 EmpressBlade 弹幕
-- 若 `target.life <= 0`（致死）且 `!target.friendly`（非城镇 NPC/小动物），`minionKillCounter++`
+### 2.2  实现
 
-**Boss/小Boss 击败** — `GrowableTerraprismaGlobalNPC.OnKill`：
-- 遍历所有活跃玩家，同时满足三个条件则记录：
-  1. 玩家持有 gtprisma buff（`HasBuff`）
-  2. 玩家参与过对该 NPC 的战斗（`npc.playerInteraction[i] == true`）
-  3. NPC 是 Boss 或小 Boss
-- 不依赖弹幕致死一击 — 鞭子补刀也能正确记录
-- **多体节 Boss**：通过 `npc.realLife` 追溯头部 type，HashSet 自动去重
+**Boss 击败** — `GrowableTerraprismaGlobalNPC.OnKill`：遍历玩家，持 gtprisma buff + `npc.playerInteraction[i]` + `npc.boss` → 加入 `defeatedBossTypes`。
 
-**小 Boss 列表**：
-  - `NPCID.IceGolem`（冰雪巨人）
-  - `NPCID.SandElemental`（沙元素）
-  - `NPCID.BloodNautilus`（恐惧鹦鹉螺，内部名 BloodNautilus）
-  - `NPCID.PirateShip`（荷兰飞盗船）
-  - `NPCID.Pumpking`（南瓜王）
-  - `NPCID.IceQueen`（冰雪女王）
-  - `NPCID.MartianSaucerCore`（火星飞碟）
+**伤害计算** — `GrowableTerraprismaItem.ModifyWeaponDamage()`：`damage.Base += BossesBaseBonus`。追加到基底（prefix 和装备加成之前），兼容重铸系统。每秒仅 Boss 击败时触发，无每帧开销。
 
-**buff-弹幕生命周期**（复刻原版 `buffType == 322` 模式）：
-- `GrowableTerraprismaPlayer.gtprismaMinionActive` — 计算属性，等价于玩家是否持有 gtprisma buff
-- `GrowableTerraprismaPlayer.PostUpdateBuffs()` — buff 存在 + `ownedProjectileCounts[946] > 0` → `buffTime = 18000`
-- `GrowableTerraprismaGlobalProjectile.PostAI()` — `gtprismaMinionActive == true` → `timeLeft = 2`（仅 `localAI[2] == 1f`）
-- 取消 buff → `gtprismaMinionActive` 变 false → 弹幕 2 帧后自然消亡
+**面板修正** — `ModifyTooltips`：通过 `player.GetWeaponDamage(Item)` 获取真实有效伤害，替换原版 Damage tooltip 行显示修正后数值。
 
-### 2.4  数值成长视觉反馈
+**buff-弹幕生命周期**（灾厄 `CelestialAxeMinion` 模式）：
+- `GrowableTerraprismaBuff.Update()` — `ownedProjectileCounts[type] > 0` → 设 `growableMinionActive = true`，`buffTime = 18000`；否则 `DelBuff`
+- `GrowableTerraprismaPlayer.ResetEffects()` — `growableMinionActive = false`
+- `GrowableTerraprismaProjectile.AI()` — `player.AddBuff(buffType, 3600)`；`!growableMinionActive` → 弹幕死亡
 
-- gtprisma 保持原版外观，仅在 tooltip 显示成长数据。
-- uprisma 达到成长阈值时触发短暂剑刃辉光脉冲。
-- Tooltip 显示：击杀数、独特 Boss 击败数、当前伤害倍率。
+**被动能力注入点**：
+- **持有者能力**（发光、+1 栏位、移速）→ `GrowableTerraprismaBuff.Update()`，在生命周期维护后、`buffTime` 续期后执行
+- **召唤物能力**（蜜蜂、强光、棱镜、拾取、穿甲）→ `GrowableTerraprismaProjectile.AI()`，在 `_blacklist.Clear()` 后、`AI_156_Think` 前执行
+- **Buff 说明文本** → `GrowableTerraprismaBuff.ModifyBuffText()`，根据 `defeatedBossTypes` 动态追加行
+
+### 2.3  gtprisma 功能性成长
+
+gtprisma 击败特定 Boss 后解锁**被动能力**。区别于 uprisma 的行为叠加层，gtprisma 的能力直接作用于持有者或召唤物自身，无需行为接口。
+
+**所有能力仅在 gtprisma 召唤物存活时生效**。影响持有者的增益（发光、移动速度等）通过 `GrowableTerraprismaBuff.Update()` 施加，类似药水效果的运作方式。
+
+#### 已设计能力
+
+| Boss | 能力 | 阶段 | 说明 |
+|------|------|------|------|
+| 史莱姆王（King Slime） | **自身发光** | 1 | ✅ 已实现。持有者发出基础光源，通过 `GrowableTerraprismaBuff.Update()` 施加。 |
+| 蜂王（Queen Bee） | **工蜂护卫** | 2 | ✅ 已实现。首个召唤物每 2.5 秒补充蜜蜂，伤害 = 当前弹幕伤害 × 0.35，aiStyle 42。 |
+| 史莱姆之神（Slime God） | **+1 召唤栏位** | 2 | ✅ 已实现。召唤物存活时 +1 召唤栏位，通过 `GrowableTerraprismaBuff.Update()` 施加。 |
+| 血肉墙（Wall of Flesh） | **强光 + 血嗜** | 2 | ✅ 已实现。召唤物发出强光（1.2/0.9/1.8）+ 每 10 次命中回复持有者 1 HP。 |
+| 史莱姆皇后（Queen Slime） | **移动 +10%** | 3 | ✅ 已实现。持有者移动速度 +10%，通过 `GrowableTerraprismaBuff.Update()` 施加。 |
+| 毁灭者（The Destroyer） | **自动拾取** | 3 | ✅ 已实现。空闲状态每 120 帧搜索 50 格半径内掉落物，召唤物直线冲刺（22px/帧）拾取后返回玩家（18px/帧）释放。拾取金币/银币；HP<90%时拾取心，MP<90%时拾取魔力星，心/魔力星优先级高于攻击。多召唤物并发拾取，搜索帧错开5帧，使用 `ItemFetchLockSystem` 物品锁定+冷却机制防止竞态。Shift+右键切换 FocusOnFetching 优先拾取模式（攻击中也拾取普通物品）。 |
+| 双子魔眼（The Twins） | **微型棱镜** | 3 | ✅ 已实现。所有召唤物共享命中计数，累计 20 次攻击向目标发射一枚缩小泰拉棱镜弹幕（伤害 = 原版伤害 × 0.4，穿透 3 次）。弹幕自动追踪最近敌人，存活 3 秒。计数器存储在 `GrowableTerraprismaPlayer.miniPrismHitCounter`。 |
+| 机械骷髅王（Skeletron Prime） | **穿甲** | 3 | ✅ 已实现。召唤物攻击无视目标 10 点防御。在 `ModifyHitNPC` 中设置 `modifiers.ArmorPenetration += 10`。 |
+| 世纪之花（Plantera） | **生命回复** | 4 | ✅ 已实现。持有者生命回复 +5（约 +2.5 HP/s），通过 `GrowableTerraprismaBuff.Update()` 施加。 |
+
+#### 实现模式
+
+所有能力通过 `defeatedBossTypes.Contains(NPCID)` 判定解锁，写入对应钩子：
+
+- **持有者能力**（发光、移动速度、+1 栏位、生命回复）→ `GrowableTerraprismaBuff.Update()`，仅在召唤物存活时生效
+- **召唤物能力**（蜜蜂、强光、棱镜、拾取、穿甲）→ `GrowableTerraprismaProjectile` AI/ModifyHitNPC
+
+#### 未设计能力（后续扩展）
+
+以下 Boss 暂未设计能力：克苏鲁之眼、EoW/BoC、骷髅王、石巨人、猪鲨、光之女皇、拜月教徒、月亮领主。可在后续版本补充。
 
 ---
 
@@ -232,17 +248,17 @@ Mod.Call("GrowableTerraprisma", "RegisterBehavior", new MyCustomBehavior());
   ▼
 前期 → 困难模式前 → 困难模式 → 月球领主后
   │                                    │
-  │  gtprisma 纯数值成长                 │  击败光之女皇 → 获得 vprisma
-  │  （所有 Boss 击杀 + 召唤物           │  合成 uprisma（vprisma + gtprisma）
-  │    击杀均计入）                      │  gtprisma 保留在背包中
+  │  gtprisma 纯 Boss 基础伤害成长       │  击败光之女皇 → 获得 vprisma
+  │  （击败 Boss → Item.damage 增加）    │  合成 uprisma（vprisma + gtprisma）
+  │                                    │  gtprisma 保留在背包中
   │                                    ▼
   │                              uprisma 阶段：
-  │                              数值继续成长（多维缩放）+
+  │                              Boss 数值继续成长 +
   │                              击败特定 Boss → 解锁对应行为
   │                                    │
   ▼                                    ▼
 每个 Boss 击败贡献：              原版 Boss 行为（5个）
-  - 数值成长点数                  灾厄关键 Boss 行为（8个）
+  - +2~18 基础伤害                灾厄关键 Boss 行为（8个）
   - 对应行为解锁（uprisma 阶段）    总计 13 个可解锁行为
 ```
 
@@ -260,37 +276,20 @@ Mod.Call("GrowableTerraprisma", "RegisterBehavior", new MyCustomBehavior());
 ```csharp
 public class GrowableTerraprismaPlayer : ModPlayer
 {
-    public int minionKillCounter;
     public HashSet<int> defeatedBossTypes = new();  // NPC type ID 集合
-    public HashSet<int> defeatedMiniBossTypes = new();  // 特定小 Boss NPC type
 
-    public int UniqueBossesDefeated => defeatedBossTypes.Count;
-    public int UniqueMiniBossesDefeated => defeatedMiniBossTypes.Count;
-    public float GrowthPoints => minionKillCounter + (UniqueBossesDefeated + UniqueMiniBossesDefeated) * 25;
+    public int BossesBaseBonus => defeatedBossTypes.Sum(t => GetBossBonus(t));
 
-    // 多维度缩放 — 对数递减，无硬上限
-    public float DamageMultiplier       => 1f + MathF.Log(1 + GrowthPoints * 0.005f) * 0.5f;
-    public float CritChanceBonus        => MathF.Min(GrowthPoints / 66f, 15f);
-    public float CritDamageMultiplier   => 2f + MathF.Log(1 + GrowthPoints * 0.002f) * 0.3f;
-    public float AttackSpeedMultiplier  => 1f + MathF.Log(1 + GrowthPoints * 0.003f) * 0.2f;
-
-    // 生命周期
     public override void Initialize() {
-        minionKillCounter = 0;
         defeatedBossTypes.Clear();
-        defeatedMiniBossTypes.Clear();
     }
 
     public override void SaveData(TagCompound tag) {
-        tag["kills"] = minionKillCounter;
         tag["bosses"] = defeatedBossTypes.ToList();
-        tag["miniBosses"] = defeatedMiniBossTypes.ToList();
     }
 
     public override void LoadData(TagCompound tag) {
-        minionKillCounter = tag.GetInt("kills");
         defeatedBossTypes = tag.Get<List<int>>("bosses")?.ToHashSet() ?? new();
-        defeatedMiniBossTypes = tag.Get<List<int>>("miniBosses")?.ToHashSet() ?? new();
     }
 }
 ```
@@ -298,8 +297,8 @@ public class GrowableTerraprismaPlayer : ModPlayer
 ### 5.2  无需保存的数据
 
 - 行为解锁状态：运行时由 `defeatedBossTypes.Contains(behavior.RequiredBossNPCType)` 推导。
-- 数值倍率：运行时由计数器计算。
-- "阶段": 本设计中不存在阶段概念 — 行为由特定 Boss 解锁，数值由公式连续缩放。
+- `BossesBaseBonus`：运行时由 `defeatedBossTypes.Sum(GetBossBonus)` 计算。
+- `Item.damage`：不直接修改。额外伤害通过 `ModifyWeaponDamage` 运行时追加到 `damage.Base`，Tooltip 由 `GetWeaponDamage(Item)` 动态生成。
 
 ---
 
@@ -320,7 +319,7 @@ public class GrowableTerraprismaPlayer : ModPlayer
 
 uprisma 弹幕完全复用原版资源：
 - **纹理**: `TextureAssets.Projectile[ProjectileID.EmpressBlade]`
-- **拖尾**: `EmpressBladeDrawer` 结构体（原版顶点条带着色器）
+- **拖尾**: 精灵残影方案（遍历 `oldPos`/`oldRot` 绘制渐进透明精灵副本，兼容 ModProjectile.PreDraw），gtprisma 则使用原版 `EmpressBladeDrawer` 顶点条带
 - **颜色**: `Projectile.GetFairyQueenWeaponsColor()` 彩虹色调循环
 
 ### 7.2  行为相关视觉效果
@@ -342,17 +341,26 @@ GrowableTerraprisma/
 ├── GrowableTerraprisma.cs
 ├── DESIGN.md
 ├── Localization/
-│   └── en-US_Mods.GrowableTerraprisma.hjson
+│   ├── en-US_Mods.GrowableTerraprisma.hjson
+│   ├── en-US_Mods.GrowableTerraprisma.Configs.hjson
+│   ├── zh-Hans_Mods.GrowableTerraprisma.Configs.hjson
+├── Common/
+│   └── Configs/
+│       └── GrowableTerraprismaConfig.cs         # ModConfig — 基础伤害/Boss层级加成/uprisma倍率
 ├── Content/
-│   └── Items/
-│       ├── GrowableTerraprismaItem.cs          # gtprisma — 初始物品，原版弹幕
-│       └── UltraTerraprismaItem.cs             # uprisma — 合成品，自定义弹幕
-├── Projectiles/
-│   └── UltraTerraprismaProjectile.cs           # uprisma 召唤物：原版 AI + 行为层
+│   ├── Items/
+│   │   ├── GrowableTerraprismaItem.cs          # gtprisma — 初始物品，自定义弹幕
+│   │   └── UltraTerraprismaItem.cs             # uprisma — 合成品，自定义弹幕
+│   ├── Projectiles/
+│   │   ├── GrowableTerraprismaProjectile.cs    # gtprisma 召唤物：完整移植原版 AI + 渲染
+│   │   └── UltraTerraprismaProjectile.cs       # uprisma 召唤物：原版 AI + 行为层
+│   └── Buffs/
+│       └── GrowableTerraprismaBuff.cs          # 召唤栏 buff（灾厄更新模式）
 ├── Players/
-│   └── GrowableTerraprismaPlayer.cs            # 击杀计数、Boss 追踪、初始背包
+│   └── GrowableTerraprismaPlayer.cs            # Boss 击败追踪 + 层级判定
 ├── Systems/
-│   └── GrowableTerraprismaSystem.cs            # ModSystem、行为注册表、Mod.Call
+│   ├── GrowableTerraprismaSystem.cs            # ModSystem、行为注册表、Mod.Call
+│   └── ItemFetchLockSystem.cs                  # 自动拾取物品锁定+冷却机制（防竞态、世界卸载清理）
 ├── Behaviors/
 │   ├── IUprismaBehavior.cs                     # 行为接口
 │   ├── UprismaBehaviorRegistry.cs              # 静态注册表
@@ -366,7 +374,6 @@ GrowableTerraprisma/
 │   │   ├── CalamityBehaviors.cs                # 灾厄关键 Boss 行为（条件注册）
 │   │   └── CalamityBossTypeCache.cs            # 灾厄 Boss type ID 缓存
 ├── Global/
-│   ├── GrowableTerraprismaGlobalProjectile.cs  # 击杀追踪（OnHitNPC）
 │   └── GrowableTerraprismaGlobalNPC.cs         # Boss 击杀追踪（OnKill）
 └── Recipes/
     └── GrowableTerraprismaRecipes.cs           # uprisma 合成配方
@@ -374,27 +381,51 @@ GrowableTerraprisma/
 
 ---
 
-## 9. 实施阶段
+## 9. 配置系统
+
+基于 tModLoader `ModConfig`，`ServerSide` 范围。在游戏内 `设置 → 模组配置` 中可调。
+
+| 配置项 | 类型 | 默认值 | 范围 | 说明 |
+|--------|------|--------|------|------|
+| `BaseDamage` | int | 15 | 1–100 | 武器初始基础伤害 |
+| `Phase1Bonus` | int | 3 | 0–50 | 史莱姆王、克眼、EoW/BoC、荒漠灾虫、菌生蟹 |
+| `Phase2Bonus` | int | 5 | 0–50 | 蜂王、骷髅王、独眼巨鹿、血肉墙、腐巢意志/血肉宿主、史莱姆之神 |
+| `Phase3Bonus` | int | 8 | 0–50 | 史莱姆皇后、三王、渊海灾虫、硫磺火元素、极地之灵 |
+| `Phase4Bonus` | int | 15 | 0–100 | 世纪之花、灾厄之影、利维坦/阿娜希塔、白金星舰 |
+| `Phase5Bonus` | int | 25 | 0–100 | 石巨人、猪鲨、光之女皇、拜月教徒、月总、瘟疫使者、毁灭魔像、星神游龙 |
+| `Phase6Bonus` | int | 50 | 0–200 | 亵渎守卫、痴愚金龙、亵渎天神 |
+| `Phase7Bonus` | int | 100 | 0–300 | 风暴编织者、无尽虚空、西格纳斯、噬魂幽花、硫海遗爵 |
+| `Phase8Bonus` | int | 200 | 0–500 | 神明吞噬者、犽戎 |
+| `Phase9Bonus` | int | 400 | 0–1000 | 星流巨械（4体）、至尊灾厄、始源妖龙 |
+| `UltraTerraprismaDamageMultiplier` | float | 1.3 | 1.0–3.0 | uprisma 伤害 = gtprisma 伤害 × 此值 |
+
+Boss 层级判定：`GrowableTerraprismaPlayer.GetBossBonus()` 按 `IsPhase1Boss` ~ `IsPhase9Boss` 逐级判定，灾厄 NPC 类型通过 `CalResolve` 懒加载一次后缓存。未匹配的普通 Boss 归入阶段一。配置变更即时生效，无需重载 mod。
+
+---
+
+## 10. 实施阶段
 
 | 阶段 | 范围                                                      | 涉及文件                                    |
 |----- |---------------------------------------------------------- |------------------------------------------- |
 | 1    | gtprisma 物品（初始物品，原版弹幕）+ ModPlayer               | GrowableTerraprismaItem.cs, GrowableTerraprismaPlayer.cs |
 | 2    | 击杀计数 + Boss 击败追踪（GlobalProjectile + GlobalNPC）    | GrowableTerraprismaGlobalProjectile.cs, GrowableTerraprismaGlobalNPC.cs |
 | 3    | 数值成长（伤害缩放）+ tooltip                              | GrowableTerraprismaItem.cs, GrowableTerraprismaPlayer.cs |
-| 4    | uprisma 物品 + 合成配方 + 自定义弹幕                        | UltraTerraprismaItem.cs, UltraTerraprismaProjectile.cs, Recipes/ |
-| 5    | 行为接口 + 注册表 + 原版 Boss 行为                          | IUprismaBehavior.cs, UprismaBehaviorRegistry.cs, Behaviors/Vanilla/ |
-| 6    | 灾厄兼容 + 灾厄关键 Boss 行为（8 个）                       | Behaviors/Calamity/, CalamityBossTypeCache.cs |
-| 7    | 视觉润色 + 本地化 + 配置文件 + Mod.Call 集成                | 全部文件                                    |
+| 4    | gtprisma 自定义弹幕移植（ModProjectile 完整 AI + 渲染）     | GrowableTerraprismaProjectile.cs, GrowableTerraprismaBuff.cs（重构） |
+| 5    | gtprisma 功能性成长（8 Boss 被动能力）                      | GrowableTerraprismaPlayer.cs, GrowableTerraprismaProjectile.cs |
+| 6    | uprisma 物品 + 合成配方 + 自定义弹幕                        | UltraTerraprismaItem.cs, UltraTerraprismaProjectile.cs, Recipes/ |
+| 7    | 行为接口 + 注册表 + 原版 Boss 行为                          | IUprismaBehavior.cs, UprismaBehaviorRegistry.cs, Behaviors/Vanilla/ |
+| 8    | 灾厄兼容 + 灾厄关键 Boss 行为（8 个）                       | Behaviors/Calamity/, CalamityBossTypeCache.cs |
+| 9    | 视觉润色 + 本地化 + 配置文件 + Mod.Call 集成                | 全部文件                                    |
 
 ---
 
-## 10. 已确认决策
+## 11. 已确认决策
 
 | # | 问题 | 决策 |
 |---|------|------|
-| 1 | **数值上限** | 不设硬上限。使用对数递减 + 多维度（伤害/暴击/攻速）控制倍率增幅，确保灾厄各时期数值合理。 |
+| 1 | **数值机制** | 纯 Boss 基础伤害加成，直接叠加到 `Item.damage`。无击杀点数、无倍率公式、无迷你 Boss 追踪，保持简单可控。 |
 | 2 | **gtprisma 消耗** | 合成 uprisma 时**保留** gtprisma，仅消耗原版泰拉棱镜。 |
-| 3 | **非 Boss 里程碑** | 计入选定的小 Boss（冰雪巨人、沙元素、恐惧鹦鹉螺等，见 §2.3）。 |
+| 3 | **重铸** | 支持。`Item.damage` 保持原值，Boss 加成通过 `ModifyWeaponDamage.Base` 追加，不破坏前缀。 |
 | 4 | **多人模式** | 确保兼容，击杀追踪走持有者自身即可。 |
 | 5 | **灾厄行为数量** | 仅 8 个关键剧情 Boss 解锁行为（硫火之灵→至尊灾厄），其余仅贡献数值成长。 |
 

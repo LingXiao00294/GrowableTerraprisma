@@ -1,5 +1,6 @@
 # Windows 系统文件
 **/desktop.ini
+**/*.sln
 *Zone.Identifier
 
 # 构建产物
@@ -11,3 +12,5 @@ bin/
 .vs/
 .idea/
 *.user
+
+TODO.md

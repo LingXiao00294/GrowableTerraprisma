@@ -1,0 +1,72 @@
+GrowableTerraprismaConfig: {
+	DisplayName: 成长棱镜 配置
+
+	BaseDamage: {
+		Label: 基础伤害
+		Tooltip: 武器初始伤害，Boss加成在此之上叠加
+	}
+
+	Phase1Bonus: {
+		Label: 第一阶段加成
+		Tooltip: 史莱姆王、克苏鲁之眼、EoW/BoC、荒漠灾虫、菌生蟹
+	}
+
+	Phase2Bonus: {
+		Label: 第二阶段加成
+		Tooltip: 蜂王、骷髅王、独眼巨鹿、血肉墙、腐巢意志/血肉宿主、史莱姆之神
+	}
+
+	Phase3Bonus: {
+		Label: 第三阶段加成
+		Tooltip: 史莱姆皇后、毁灭者、双子魔眼、机械骷髅王、渊海灾虫、硫磺火元素、极地之灵
+	}
+
+	Phase4Bonus: {
+		Label: 第四阶段加成
+		Tooltip: 世纪之花、灾厄之影、利维坦/阿娜希塔、白金星舰
+	}
+
+	Phase5Bonus: {
+		Label: 第五阶段加成
+		Tooltip: 石巨人、猪鲨、光之女皇、拜月教徒、月亮领主、瘟疫使者歌莉娅、毁灭魔像、星神游龙
+	}
+
+	Phase6Bonus: {
+		Label: 第六阶段加成
+		Tooltip: 亵渎守卫、痴愚金龙、亵渎天神
+	}
+
+	Phase7Bonus: {
+		Label: 第七阶段加成
+		Tooltip: 风暴编织者、无尽虚空、西格纳斯、噬魂幽花、硫海遗爵
+	}
+
+	Phase8Bonus: {
+		Label: 第八阶段加成
+		Tooltip: 神明吞噬者、犽戎
+	}
+
+	Phase9Bonus: {
+		Label: 第九阶段加成
+		Tooltip: 星流巨械、至尊灾厄、始源妖龙
+	}
+
+	UltraTerraprismaDamageMultiplier: {
+		Label: 究极棱镜伤害倍率
+		Tooltip: uprisma 伤害 = gtprisma 伤害 × 此倍率
+	}
+
+	Headers: {
+		BaseStats: 基础属性
+		Phase1: 第一阶段
+		Phase2: 第二阶段
+		Phase3: 第三阶段
+		Phase4: 第四阶段
+		Phase5: 第五阶段
+		Phase6: 第六阶段
+		Phase7: 第七阶段
+		Phase8: 第八阶段
+		Phase9: 第九阶段
+		UltraTerraprisma: 究极棱镜
+	}
+}

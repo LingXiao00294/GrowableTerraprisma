@@ -1,0 +1,27 @@
+Items: {
+	GrowableTerraprismaItem: {
+		DisplayName: 可成长的泰拉棱镜
+		Tooltip: 每击败一种独特Boss，伤害提高
+		BossBonus: Boss击败: {0}（基础伤害 +{1}）
+	}
+}
+
+Buffs: {
+	GrowableTerraprismaBuff: {
+		Description: 刃之女皇将为你而战
+		DisplayName: 可成长的泰拉棱镜
+		PassiveQueenBee: 蜂王派出了她的士兵
+		PassiveSlimeGod: 史莱姆之神与你同在
+		PassiveWoF: 血肉墙渴望鲜血
+		PassiveQueenSlime: 史莱姆皇后的祝福
+		PassiveDestroyer: 毁灭者渴望一切
+		PassiveTwins: 双子魔眼的凝视化作棱镜
+		PassivePrime: 机械骷髅王为你磨砺剑刃
+		PassivePlantera: 世纪之花带来了生命祝福
+	}
+}
+
+Projectiles: {
+	GrowableTerraprismaProjectile.DisplayName: 可成长的泰拉棱镜
+	TwinMiniPrismProjectile.DisplayName: 双子微型棱镜
+}

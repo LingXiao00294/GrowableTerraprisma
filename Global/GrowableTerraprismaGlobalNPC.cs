@@ -1,5 +1,4 @@
 using Terraria;
-using Terraria.ID;
 using Terraria.ModLoader;
 using GrowableTerraprisma.Players;
 
@@ -11,13 +10,10 @@ namespace GrowableTerraprisma.Global
 
         public override void OnKill(NPC npc)
         {
-            int bossType = GetBossType(npc);
-            if (bossType < 0)
+            if (!npc.boss)
                 return;
 
-            bool isBoss = npc.boss || IsBossBody(npc);
-            if (!isBoss && !IsMiniBoss(bossType))
-                return;
+            int bossType = GetBossType(npc);
 
             int buffType = ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>();
             for (int i = 0; i < Main.maxPlayers; i++)
@@ -30,11 +26,8 @@ namespace GrowableTerraprisma.Global
                 if (!npc.playerInteraction[i])
                     continue;
 
-                var gtPlayer = player.GetModPlayer<GrowableTerraprismaPlayer>();
-                if (isBoss)
-                    gtPlayer.defeatedBossTypes.Add(bossType);
-                else
-                    gtPlayer.defeatedMiniBossTypes.Add(bossType);
+                var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
+                growable.defeatedBossTypes.Add(bossType);
             }
         }
 
@@ -47,25 +40,6 @@ namespace GrowableTerraprisma.Global
                     return main.type;
             }
             return npc.type;
-        }
-
-        private static bool IsBossBody(NPC npc)
-        {
-            if (npc.realLife < 0 || npc.realLife >= Main.maxNPCs)
-                return false;
-            NPC main = Main.npc[npc.realLife];
-            return main.active && main.boss;
-        }
-
-        private static bool IsMiniBoss(int npcType)
-        {
-            return npcType == NPCID.IceGolem
-                || npcType == NPCID.SandElemental
-                || npcType == NPCID.BloodNautilus
-                || npcType == NPCID.PirateShip
-                || npcType == NPCID.Pumpking
-                || npcType == NPCID.IceQueen
-                || npcType == NPCID.MartianSaucerCore;
         }
     }
 }
