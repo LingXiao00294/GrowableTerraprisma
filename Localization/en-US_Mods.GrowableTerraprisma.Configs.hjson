@@ -1,0 +1,72 @@
+GrowableTerraprismaConfig: {
+	DisplayName: Growable Terraprisma Config
+
+	BaseDamage: {
+		Label: Base Damage
+		Tooltip: Starting weapon damage before Boss bonuses
+	}
+
+	Phase1Bonus: {
+		Label: Phase 1 Bonus
+		Tooltip: King Slime, EoC, EoW/BoC, Desert Scourge, Crabulon
+	}
+
+	Phase2Bonus: {
+		Label: Phase 2 Bonus
+		Tooltip: Queen Bee, Skeletron, Deerclops, WoF, Hive Mind/Perforators, Slime God
+	}
+
+	Phase3Bonus: {
+		Label: Phase 3 Bonus
+		Tooltip: Queen Slime, Destroyer, Twins, Prime, Aquatic Scourge, Brimstone Elemental, Cryogen
+	}
+
+	Phase4Bonus: {
+		Label: Phase 4 Bonus
+		Tooltip: Plantera, Calamitas Clone, Leviathan/Anahita, Astrum Aureus
+	}
+
+	Phase5Bonus: {
+		Label: Phase 5 Bonus
+		Tooltip: Golem, Duke Fishron, Empress of Light, Cultist, Moon Lord, Plaguebringer Goliath, Ravager, Astrum Deus
+	}
+
+	Phase6Bonus: {
+		Label: Phase 6 Bonus
+		Tooltip: Profaned Guardians, Dragonfolly, Providence
+	}
+
+	Phase7Bonus: {
+		Label: Phase 7 Bonus
+		Tooltip: Storm Weaver, Ceaseless Void, Signus, Polterghast, Old Duke
+	}
+
+	Phase8Bonus: {
+		Label: Phase 8 Bonus
+		Tooltip: Devourer of Gods, Yharon
+	}
+
+	Phase9Bonus: {
+		Label: Phase 9 Bonus
+		Tooltip: Exo Mechs, Supreme Calamitas, Primordial Wyrm
+	}
+
+	UltraTerraprismaDamageMultiplier: {
+		Label: Ultra Terraprisma Damage Multiplier
+		Tooltip: uprisma damage = gtprisma damage x this value
+	}
+
+	Headers: {
+		BaseStats: Base Stats
+		Phase1: Phase 1
+		Phase2: Phase 2
+		Phase3: Phase 3
+		Phase4: Phase 4
+		Phase5: Phase 5
+		Phase6: Phase 6
+		Phase7: Phase 7
+		Phase8: Phase 8
+		Phase9: Phase 9
+		UltraTerraprisma: Ultra Terraprisma
+	}
+}

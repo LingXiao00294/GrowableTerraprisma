@@ -1,13 +1,27 @@
 Items: {
 	GrowableTerraprismaItem: {
-		DisplayName: Growable Terraprisma Item
-		Tooltip: ""
+		DisplayName: Growable Terraprisma
+		Tooltip: Grows stronger for each unique Boss defeated
+		BossBonus: Bosses Defeated: {0} types (base damage +{1})
 	}
 }
 
 Buffs: {
 	GrowableTerraprismaBuff: {
-		Description: Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.Description
-		DisplayName: Growable Terraprisma Buff
+		Description: The Growable Terraprisma will fight for you
+		DisplayName: Growable Terraprisma
+		PassiveQueenBee: Queen Bee sent out her soldiers
+		PassiveSlimeGod: Slime God is with you
+		PassiveWoF: Wall of Flesh craves blood
+		PassiveQueenSlime: Queen Slime's blessing
+		PassiveDestroyer: The Destroyer hungers for all
+		PassiveTwins: The Twins' gaze becomes a prism
+		PassivePrime: Skeletron Prime sharpens your blade
+		PassivePlantera: Plantera brings a life blessing
 	}
+}
+
+Projectiles: {
+	GrowableTerraprismaProjectile.DisplayName: Growable Terraprisma
+	TwinMiniPrismProjectile.DisplayName: Twin Mini Prism Projectile
 }
