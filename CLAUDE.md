@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 工作约定
 
-- **每次代码修改必须同步更新 `DESIGN.md`**：增加/修改功能时更新对应章节，修复 bug 时补充实现细节。保持设计文档始终反映实际代码状态。
+- **所有修改必须同步更新 `DESIGN.md`**：增加/修改功能时更新对应章节，修复 bug 时补充实现细节。保持设计文档始终反映实际代码状态。
+- **不要自动提交 git**：修改完成后展示 diff，等待用户 review 并明确要求提交时再执行 commit。用户要求提交时使用 `git-auto-commit` skill 进行原子化拆分和 Conventional Commits 规范提交。
 
 ## 构建与加载
 
@@ -96,24 +97,28 @@ GrowableTerraprisma/
 | 阶段 | 描述 | 状态 |
 |------|------|------|
 | 1 | gtprisma + Buff + ModPlayer | ✅ 已完成 |
-| 2 | 击杀追踪 (GlobalProjectile + GlobalNPC) | ✅ 已完成 |
+| 2 | 击杀追踪 (GlobalNPC) | ✅ 已完成 |
 | 3 | 数值成长 + tooltip | ✅ 已包含在阶段1 |
-| 4 | uprisma + 合成 + 自定义弹幕 | ⬜ 待实现 |
-| 5 | 行为接口 + 原版 Boss 行为 | ⬜ 待实现 |
-| 6 | 灾厄兼容 | ⬜ 待实现 |
-| 7 | 视觉润色 + 本地化 + 配置 | ⬜ 待实现 |
+| 4 | gtprisma 自定义弹幕移植（ModProjectile 完整 AI + 渲染） | ✅ 已完成 |
+| 5 | gtprisma 功能性成长（8 Boss 被动能力） | ✅ 已完成 |
+| 6 | uprisma + 合成 + 自定义弹幕 | ⬜ 待实现 |
+| 7 | 行为接口 + 原版 Boss 行为 | ⬜ 待实现 |
+| 8 | 灾厄兼容 | ⬜ 待实现 |
+| 9 | 视觉润色 + 本地化 + 配置 | ✅ 部分完成（ModConfig + 本地化已实现） |
 
 ### 已创建文件
 
-- `Content/Items/GrowableTerraprismaItem.cs` — gtprisma 物品，base damage 15，成长系数 0.004
+- `Content/Items/GrowableTerraprismaItem.cs` — gtprisma 物品，base damage 15，成长系数 0.004，生成自定义弹幕
 - `Content/Items/GrowableTerraprismaItem.png` — 物品贴图（原版 Terraprisma 贴图，从 wiki webp 转换）
-- `Content/Buffs/GrowableTerraprismaBuff.cs` — gtprisma 召唤栏 buff
+- `Content/Projectiles/GrowableTerraprismaProjectile.cs` — gtprisma 召唤物，完整移植原版 AI_156 状态机 + EmpressBladeDrawer 顶点拖尾渲染
+- `Content/Projectiles/GrowableTerraprismaProjectile.png` — 弹幕贴图（同上）
+- `Content/Buffs/GrowableTerraprismaBuff.cs` — 召唤栏 buff（灾厄 Update 模式：ownedProjectileCounts 驱动生命周期）
 - `Content/Buffs/GrowableTerraprismaBuff.png` — Buff 图标（原版 Terraprisma buff 贴图，从 wiki webp 转换）
-- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，击杀计数/Boss击败集合/初始物品/buff生命周期
-- `Global/GrowableTerraprismaGlobalProjectile.cs` — 弹幕生命周期（PostAI）+ 小怪击杀追踪（OnHitNPC），仅处理 localAI[2]==1f
+- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，击杀计数/Boss击败集合/初始物品/growableMinionActive bool
 - `Global/GrowableTerraprismaGlobalNPC.cs` — Boss/小Boss 击败追踪（OnKill），通过 playerInteraction 判断参战
+- `Systems/ItemFetchLockSystem.cs` — 自动拾取物品锁定/冷却机制（ModSystem），防竞态、世界卸载清理
 - `scripts/convert_webp.py` — webp→png 转换脚本（uv + Pillow）
 
 ### 下一步
 
-Phase 4: uprisma + 合成配方 + 自定义弹幕（UltraTerraprismaProjectile）。
+Phase 5: gtprisma 功能性成长全部完成。已实现：发光、工蜂、+1栏位、强光+血嗜、移速+10%、自动拾取（毁灭者）、微型棱镜（双子魔眼）、穿甲（机械骷髅王）、生命回复（世纪之花）。Phase 6: uprisma + 合成 + 自定义弹幕待开始。
