@@ -272,7 +272,7 @@ namespace GrowableTerraprisma.Players
             }
 
             private static int FindNPC(Mod mod, string name) =>
-                mod.Find<ModNPC>(name)?.Type ?? -1;
+                mod.TryFind(name, out ModNPC npc) ? npc.Type : -1;
         }
     }
 }

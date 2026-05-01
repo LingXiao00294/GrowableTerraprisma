@@ -52,7 +52,7 @@ namespace GrowableTerraprisma.Systems
             _cooldownItems.Clear();
         }
 
-        public override void PostUpdateInput()
+        public override void PostUpdateProjectiles()
         {
             if (Main.GameUpdateCount % 120 != 0)
                 return;
@@ -67,6 +67,7 @@ namespace GrowableTerraprisma.Systems
             foreach (var key in toRemove)
                 _lockedItems.Remove(key);
 
+            toRemove.Clear();
             foreach (var (itemIdx, expireTick) in _cooldownItems)
             {
                 if (Main.GameUpdateCount > (ulong)expireTick)
@@ -74,7 +75,6 @@ namespace GrowableTerraprisma.Systems
             }
             foreach (var key in toRemove)
                 _cooldownItems.Remove(key);
-            toRemove.Clear();
         }
     }
 }
