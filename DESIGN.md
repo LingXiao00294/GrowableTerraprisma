@@ -200,7 +200,7 @@ Mod.Call("GrowableTerraprisma", "RegisterBehavior", new MyCustomBehavior());
 
 | 行为名称           | 解锁 Boss            | 效果描述                                        |
 |------------------- |--------------------- |------------------------------------------------ |
-| 加速之刃（Swift Blades）  | （始终激活）           | 此召唤物的移动速度 +15%。                          |
+| 加速之刃（Swift Blades）  | （始终激活）           | 玩家的移动速度 +15%。                          |
 | 星辰加护（Star Aegis）    | 月亮领主              | 最大召唤栏位 +2。                                  |
 | 利刃台风（Razor Typhoon） | 猪龙鱼公爵            | 周期性向目标发射小型台风弹幕。                      |
 | 以太之舞（Ethereal Dance）| 光之女皇              | 召唤物留下造成伤害的残影轨迹。                      |
@@ -412,7 +412,7 @@ Boss 层级判定：`GrowableTerraprismaPlayer.GetBossBonus()` 按 `IsPhase1Boss
 | 3    | 数值成长（伤害缩放）+ tooltip                              | GrowableTerraprismaItem.cs, GrowableTerraprismaPlayer.cs |
 | 4    | gtprisma 自定义弹幕移植（ModProjectile 完整 AI + 渲染）     | GrowableTerraprismaProjectile.cs, GrowableTerraprismaBuff.cs（重构） |
 | 5    | gtprisma 功能性成长（8 Boss 被动能力）                      | GrowableTerraprismaPlayer.cs, GrowableTerraprismaProjectile.cs |
-| 6    | uprisma 物品 + 合成配方 + 自定义弹幕                        | UltraTerraprismaItem.cs, UltraTerraprismaProjectile.cs, Recipes/ |
+| 6    | uprisma 物品 + 合成配方 + 自定义弹幕（继承全部 gtprisma 能力 + 行为层）| UltraTerraprismaItem.cs, UltraTerraprismaProjectile.cs, UltraTerraprismaBuff.cs, Recipes/ |
 | 7    | 行为接口 + 注册表 + 原版 Boss 行为                          | IUprismaBehavior.cs, UprismaBehaviorRegistry.cs, Behaviors/Vanilla/ |
 | 8    | 灾厄兼容 + 灾厄关键 Boss 行为（8 个）                       | Behaviors/Calamity/, CalamityBossTypeCache.cs |
 | 9    | 视觉润色 + 本地化 + 配置文件 + Mod.Call 集成                | 全部文件                                    |
