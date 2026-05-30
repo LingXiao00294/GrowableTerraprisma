@@ -101,7 +101,7 @@ GrowableTerraprisma/
 | 3 | 数值成长 + tooltip | ✅ 已包含在阶段1 |
 | 4 | gtprisma 自定义弹幕移植（ModProjectile 完整 AI + 渲染） | ✅ 已完成 |
 | 5 | gtprisma 功能性成长（8 Boss 被动能力） | ✅ 已完成 |
-| 6 | uprisma + 合成 + 自定义弹幕 | ⬜ 待实现 |
+| 6 | uprisma + 合成 + 自定义弹幕 | ✅ 已完成 |
 | 7 | 行为接口 + 原版 Boss 行为 | ⬜ 待实现 |
 | 8 | 灾厄兼容 | ⬜ 待实现 |
 | 9 | 视觉润色 + 本地化 + 配置 | ✅ 部分完成（ModConfig + 本地化已实现） |
@@ -110,15 +110,21 @@ GrowableTerraprisma/
 
 - `Content/Items/GrowableTerraprismaItem.cs` — gtprisma 物品，base damage 15，成长系数 0.004，生成自定义弹幕
 - `Content/Items/GrowableTerraprismaItem.png` — 物品贴图（原版 Terraprisma 贴图，从 wiki webp 转换）
+- `Content/Items/UltraTerraprismaItem.cs` — uprisma 物品，base damage 15，成长倍率 ×1.3，合成品
+- `Content/Items/UltraTerraprismaItem.png` — 物品贴图（占位，复制自 gtprisma）
 - `Content/Projectiles/GrowableTerraprismaProjectile.cs` — gtprisma 召唤物，完整移植原版 AI_156 状态机 + EmpressBladeDrawer 顶点拖尾渲染
 - `Content/Projectiles/GrowableTerraprismaProjectile.png` — 弹幕贴图（同上）
-- `Content/Buffs/GrowableTerraprismaBuff.cs` — 召唤栏 buff（灾厄 Update 模式：ownedProjectileCounts 驱动生命周期）
+- `Content/Projectiles/UltraTerraprismaProjectile.cs` — uprisma 召唤物，继承全部 gtprisma 能力 + PostAI 行为层 + 精灵残影渲染
+- `Content/Projectiles/UltraTerraprismaProjectile.png` — 弹幕贴图（占位，复制自 gtprisma）
+- `Content/Buffs/GrowableTerraprismaBuff.cs` — gtprisma 召唤栏 buff（灾厄 Update 模式：ownedProjectileCounts 驱动生命周期）
 - `Content/Buffs/GrowableTerraprismaBuff.png` — Buff 图标（原版 Terraprisma buff 贴图，从 wiki webp 转换）
-- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，击杀计数/Boss击败集合/初始物品/growableMinionActive bool
+- `Content/Buffs/UltraTerraprismaBuff.cs` — uprisma 召唤栏 buff，继承全部 gtprisma 持有者能力
+- `Players/GrowableTerraprismaPlayer.cs` — ModPlayer，击杀计数/Boss击败集合/初始物品/growableMinionActive/ultraMinionActive bool
 - `Global/GrowableTerraprismaGlobalNPC.cs` — Boss/小Boss 击败追踪（OnKill），通过 playerInteraction 判断参战
 - `Systems/ItemFetchLockSystem.cs` — 自动拾取物品锁定/冷却机制（ModSystem），防竞态、世界卸载清理
+- `Recipes/GrowableTerraprismaRecipes.cs` — uprisma 合成配方（秘银砧，1×原版泰拉棱镜，条件：光之女皇 + 成长≥200）
 - `scripts/convert_webp.py` — webp→png 转换脚本（uv + Pillow）
 
 ### 下一步
 
-Phase 5: gtprisma 功能性成长全部完成。已实现：发光、工蜂、+1栏位、强光+血嗜、移速+10%、自动拾取（毁灭者）、微型棱镜（双子魔眼）、穿甲（机械骷髅王）、生命回复（世纪之花）。Phase 6: uprisma + 合成 + 自定义弹幕待开始。
+Phase 6: uprisma + 合成 + 自定义弹幕全部完成。uprisma 继承 gtprisma 全部能力（发光、工蜂、+1栏位、强光+血嗜、移速、自动拾取、微型棱镜、穿甲、生命回复），通过 PostAI 行为层叠加 Boss 行为。Phase 7: 行为接口 + 原版 Boss 行为待开始。

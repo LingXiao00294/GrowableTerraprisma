@@ -4,6 +4,12 @@ Items: {
 		Tooltip: Grows stronger for each unique Boss defeated
 		BossBonus: Bosses Defeated: {0} types (base damage +{1})
 	}
+
+	UltraTerraprismaItem: {
+		DisplayName: Ultra Terraprisma
+		Tooltip: The ultimate form of Growable Terraprisma\nInherits all growth abilities with an additional behavior layer
+		BossBonus: Bosses Defeated: {0} types (base damage +{1}, growth multiplier x{2})
+	}
 }
 
 Buffs: {
@@ -19,9 +25,17 @@ Buffs: {
 		PassivePrime: Skeletron Prime sharpens your blade
 		PassivePlantera: Plantera brings a life blessing
 	}
+
+	UltraTerraprismaBuff: {
+		Description: The Ultra Terraprisma will fight for you
+		DisplayName: Ultra Terraprisma
+	}
 }
 
 Projectiles: {
 	GrowableTerraprismaProjectile.DisplayName: Growable Terraprisma
+	UltraTerraprismaProjectile.DisplayName: Ultra Terraprisma
 	TwinMiniPrismProjectile.DisplayName: Twin Mini Prism Projectile
 }
+
+Recipes.UltraTerraprismaCondition: Requires Empress of Light defeated and growth points >= 200

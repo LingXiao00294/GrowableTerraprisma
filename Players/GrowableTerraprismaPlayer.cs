@@ -14,6 +14,7 @@ namespace GrowableTerraprisma.Players
         public HashSet<int> defeatedBossTypes = new();
 
         public bool growableMinionActive;
+        public bool ultraMinionActive;
 
         public int miniPrismHitCounter;
 
@@ -41,6 +42,7 @@ namespace GrowableTerraprisma.Players
         public override void ResetEffects()
         {
             growableMinionActive = false;
+            ultraMinionActive = false;
         }
 
         public override void Initialize()

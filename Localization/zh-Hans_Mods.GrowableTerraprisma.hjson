@@ -4,6 +4,12 @@ Items: {
 		Tooltip: 每击败一种独特Boss，伤害提高
 		BossBonus: Boss击败: {0}（基础伤害 +{1}）
 	}
+
+	UltraTerraprismaItem: {
+		DisplayName: 究极泰拉棱镜
+		Tooltip: 可成长泰拉棱镜的究极形态\n继承全部成长能力，并拥有额外行为层
+		BossBonus: Boss击败: {0}（基础伤害 +{1}，成长倍率 ×{2}）
+	}
 }
 
 Buffs: {
@@ -19,9 +25,17 @@ Buffs: {
 		PassivePrime: 机械骷髅王为你磨砺剑刃
 		PassivePlantera: 世纪之花带来了生命祝福
 	}
+
+	UltraTerraprismaBuff: {
+		Description: 究极泰拉棱镜将为你而战
+		DisplayName: 究极泰拉棱镜
+	}
 }
 
 Projectiles: {
 	GrowableTerraprismaProjectile.DisplayName: 可成长的泰拉棱镜
+	UltraTerraprismaProjectile.DisplayName: 究极泰拉棱镜
 	TwinMiniPrismProjectile.DisplayName: 双子微型棱镜
 }
+
+Recipes.UltraTerraprismaCondition: 已击败光之女皇且成长点数 ≥ 200
