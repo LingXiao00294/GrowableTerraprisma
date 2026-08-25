@@ -17,16 +17,14 @@ namespace GrowableTerraprisma.Players
         public bool ultraMinionActive;
 
         public int miniPrismHitCounter;
+        public int lifeStealHitCounter;
 
-        public int BossesBaseBonus
+        public GrowthSnapshot Growth
         {
             get
             {
                 var cfg = ModContent.GetInstance<GrowableTerraprismaConfig>();
-                int sum = 0;
-                foreach (int t in defeatedBossTypes)
-                    sum += GetBossBonus(t, cfg, defeatedBossTypes);
-                return sum;
+                return CalculateGrowth(cfg, defeatedBossTypes);
             }
         }
 
@@ -49,6 +47,7 @@ namespace GrowableTerraprisma.Players
         {
             defeatedBossTypes.Clear();
             miniPrismHitCounter = 0;
+            lifeStealHitCounter = 0;
         }
 
         public override void SaveData(TagCompound tag)
@@ -61,33 +60,105 @@ namespace GrowableTerraprisma.Players
             defeatedBossTypes = tag.GetList<int>("bosses")?.ToHashSet() ?? new HashSet<int>();
         }
 
-        public static int GetBossBonus(int npcType, GrowableTerraprismaConfig cfg, HashSet<int> defeated)
+        public static GrowthSnapshot CalculateGrowth(
+            GrowableTerraprismaConfig cfg,
+            HashSet<int> defeated)
         {
-            // 多体 Boss 群组：必须全部击败，仅代表成员返回加成（其余返回 0 避免加倍）
-            if (npcType == NPCID.Retinazer)
-                return AllDefeated(defeated, NPCID.Retinazer, NPCID.Spazmatism) ? cfg.Phase3Bonus : 0;
-            if (npcType == NPCID.Spazmatism)
-                return 0;
-            if (CalResolve.Is(npcType, Cal.ProfanedGuardianCommander))
-                return AllDefeated(defeated, Cal.ProfanedGuardianCommander, Cal.ProfanedGuardianDefender, Cal.ProfanedGuardianHealer) ? cfg.Phase6Bonus : 0;
-            if (CalResolve.Is(npcType, Cal.ProfanedGuardianDefender)
-                || CalResolve.Is(npcType, Cal.ProfanedGuardianHealer))
-                return 0;
-            if (CalResolve.Is(npcType, Cal.Leviathan))
-                return AllDefeated(defeated, Cal.Leviathan, Cal.Anahita) ? cfg.Phase4Bonus : 0;
-            if (CalResolve.Is(npcType, Cal.Anahita))
+            CalResolve.EnsureResolved();
+
+            int[] phaseCounts = new int[10];
+            foreach (int npcType in defeated)
+            {
+                if (!ShouldCountEncounter(npcType, defeated))
+                    continue;
+
+                phaseCounts[GetBossPhase(npcType)]++;
+            }
+
+            int[] phaseCaps =
+            {
+                0,
+                cfg.Phase1Cap,
+                cfg.Phase2Cap,
+                cfg.Phase3Cap,
+                cfg.Phase4Cap,
+                cfg.Phase5Cap,
+                cfg.Phase6Cap,
+                cfg.Phase7Cap,
+                cfg.Phase8Cap,
+                cfg.Phase9Cap
+            };
+
+            int damageBonus = 0;
+            int encounterCount = 0;
+            for (int phase = 1; phase <= 9; phase++)
+            {
+                damageBonus += CalculatePhaseBonus(
+                    phaseCaps[phase], phaseCounts[phase], cfg.BossGrowthRate);
+                encounterCount += phaseCounts[phase];
+            }
+
+            return new GrowthSnapshot(damageBonus, encounterCount);
+        }
+
+        private static int CalculatePhaseBonus(int cap, int count, float growthRate)
+        {
+            if (cap <= 0 || count <= 0)
                 return 0;
 
-            if (IsPhase9Boss(npcType))  return cfg.Phase9Bonus;
-            if (IsPhase8Boss(npcType))  return cfg.Phase8Bonus;
-            if (IsPhase7Boss(npcType))  return cfg.Phase7Bonus;
-            if (IsPhase6Boss(npcType))  return cfg.Phase6Bonus;
-            if (IsPhase5Boss(npcType))  return cfg.Phase5Bonus;
-            if (IsPhase4Boss(npcType))  return cfg.Phase4Bonus;
-            if (IsPhase3Boss(npcType))  return cfg.Phase3Bonus;
-            if (IsPhase2Boss(npcType))  return cfg.Phase2Bonus;
-            if (IsPhase1Boss(npcType))  return cfg.Phase1Bonus;
-            return cfg.Phase1Bonus;
+            float remainingRatio = MathF.Pow(1f - growthRate, count);
+            return (int)MathF.Round(cap * (1f - remainingRatio));
+        }
+
+        private static bool ShouldCountEncounter(int npcType, HashSet<int> defeated)
+        {
+            // 多实体 Boss 只在整场遭遇完成后计一次，避免同一战斗重复吃到阶段预算。
+            if (npcType == NPCID.Retinazer)
+                return AllDefeated(defeated, NPCID.Retinazer, NPCID.Spazmatism);
+            if (npcType == NPCID.Spazmatism)
+                return false;
+
+            if (CalResolve.Is(npcType, Cal.Leviathan))
+                return AllDefeated(defeated, Cal.Leviathan, Cal.Anahita);
+            if (CalResolve.Is(npcType, Cal.Anahita))
+                return false;
+
+            if (CalResolve.Is(npcType, Cal.ProfanedGuardianCommander))
+            {
+                return AllDefeated(
+                    defeated,
+                    Cal.ProfanedGuardianCommander,
+                    Cal.ProfanedGuardianDefender,
+                    Cal.ProfanedGuardianHealer);
+            }
+            if (CalResolve.Is(npcType, Cal.ProfanedGuardianDefender)
+                || CalResolve.Is(npcType, Cal.ProfanedGuardianHealer))
+                return false;
+
+            if (CalResolve.Is(npcType, Cal.AresBody))
+            {
+                return AllDefeated(defeated, Cal.AresBody, Cal.ThanatosHead)
+                    && AnyDefeated(defeated, Cal.Apollo, Cal.Artemis);
+            }
+            if (CalResolve.Is(npcType, Cal.ThanatosHead)
+                || CalResolve.Is(npcType, Cal.Apollo)
+                || CalResolve.Is(npcType, Cal.Artemis))
+                return false;
+
+            return true;
+        }
+
+        private static int GetBossPhase(int npcType)
+        {
+            if (IsPhase9Boss(npcType)) return 9;
+            if (IsPhase8Boss(npcType)) return 8;
+            if (IsPhase7Boss(npcType)) return 7;
+            if (IsPhase6Boss(npcType)) return 6;
+            if (IsPhase5Boss(npcType)) return 5;
+            if (IsPhase4Boss(npcType)) return 4;
+            if (IsPhase3Boss(npcType)) return 3;
+            if (IsPhase2Boss(npcType)) return 2;
+            return 1;
         }
 
         private static bool AllDefeated(HashSet<int> defeated, params int[] types)
@@ -96,6 +167,33 @@ namespace GrowableTerraprisma.Players
                 if (!defeated.Contains(t))
                     return false;
             return true;
+        }
+
+        private static bool AnyDefeated(HashSet<int> defeated, params int[] types)
+        {
+            foreach (int t in types)
+                if (defeated.Contains(t))
+                    return true;
+            return false;
+        }
+
+        internal static bool HasDefeatedSlimeGod(HashSet<int> defeated)
+        {
+            CalResolve.EnsureResolved();
+            return Cal.SlimeGodCore > 0 && defeated.Contains(Cal.SlimeGodCore);
+        }
+
+        public readonly struct GrowthSnapshot
+        {
+            public GrowthSnapshot(int damageBonus, int encounterCount)
+            {
+                DamageBonus = damageBonus;
+                EncounterCount = encounterCount;
+            }
+
+            public int DamageBonus { get; }
+
+            public int EncounterCount { get; }
         }
 
         #region Phase classification
@@ -223,9 +321,15 @@ namespace GrowableTerraprisma.Players
         {
             private static bool _resolved;
 
+            internal static void EnsureResolved()
+            {
+                if (!_resolved)
+                    Resolve();
+            }
+
             public static bool Is(int t, int calType)
             {
-                if (!_resolved) Resolve();
+                EnsureResolved();
                 return calType > 0 && t == calType;
             }
 

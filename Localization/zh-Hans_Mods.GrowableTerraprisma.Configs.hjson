@@ -3,70 +3,68 @@ GrowableTerraprismaConfig: {
 
 	BaseDamage: {
 		Label: 基础伤害
-		Tooltip: 武器初始伤害，Boss加成在此之上叠加
+		Tooltip: 武器初始伤害，成长伤害在此之上叠加
 	}
 
-	Phase1Bonus: {
-		Label: 第一阶段加成
-		Tooltip: 史莱姆王、克苏鲁之眼、EoW/BoC、荒漠灾虫、菌生蟹
+	BossGrowthRate: {
+		Label: 单次成长比例
+		Tooltip: 每个有效Boss遭遇获得当前阶段剩余伤害预算的比例；后续击杀收益递减
 	}
 
-	Phase2Bonus: {
-		Label: 第二阶段加成
-		Tooltip: 蜂王、骷髅王、独眼巨鹿、血肉墙、腐巢意志/血肉宿主、史莱姆之神
+	Phase1Cap: {
+		Label: 第一阶段预算
+		Tooltip: 史莱姆王至世界邪恶Boss阶段的最大成长伤害
 	}
 
-	Phase3Bonus: {
-		Label: 第三阶段加成
-		Tooltip: 史莱姆皇后、毁灭者、双子魔眼、机械骷髅王、渊海灾虫、硫磺火元素、极地之灵
+	Phase2Cap: {
+		Label: 第二阶段预算
+		Tooltip: 蜂王至血肉墙阶段的最大成长伤害
 	}
 
-	Phase4Bonus: {
-		Label: 第四阶段加成
-		Tooltip: 世纪之花、灾厄之影、利维坦/阿娜希塔、白金星舰
+	Phase3Cap: {
+		Label: 第三阶段预算
+		Tooltip: 困难模式初期至机械Boss阶段的最大成长伤害
 	}
 
-	Phase5Bonus: {
-		Label: 第五阶段加成
-		Tooltip: 石巨人、猪鲨、光之女皇、拜月教徒、月亮领主、瘟疫使者歌莉娅、毁灭魔像、星神游龙
+	Phase4Cap: {
+		Label: 第四阶段预算
+		Tooltip: 世纪之花阶段的最大成长伤害
 	}
 
-	Phase6Bonus: {
-		Label: 第六阶段加成
-		Tooltip: 亵渎守卫、痴愚金龙、亵渎天神
+	Phase5Cap: {
+		Label: 第五阶段预算
+		Tooltip: 石巨人至月亮领主阶段的最大成长伤害
 	}
 
-	Phase7Bonus: {
-		Label: 第七阶段加成
-		Tooltip: 风暴编织者、无尽虚空、西格纳斯、噬魂幽花、硫海遗爵
+	Phase6Cap: {
+		Label: 第六阶段预算
+		Tooltip: 亵渎守卫至亵渎天神阶段的最大成长伤害
 	}
 
-	Phase8Bonus: {
-		Label: 第八阶段加成
-		Tooltip: 神明吞噬者、犽戎
+	Phase7Cap: {
+		Label: 第七阶段预算
+		Tooltip: 毁灭之灵至硫海遗爵阶段的最大成长伤害
 	}
 
-	Phase9Bonus: {
-		Label: 第九阶段加成
-		Tooltip: 星流巨械、至尊灾厄、始源妖龙
+	Phase8Cap: {
+		Label: 第八阶段预算
+		Tooltip: 神明吞噬者至犽戎阶段的最大成长伤害
+	}
+
+	Phase9Cap: {
+		Label: 第九阶段预算
+		Tooltip: 星流巨械、至尊灾厄和始源妖龙阶段的最大成长伤害
 	}
 
 	UltraTerraprismaDamageMultiplier: {
 		Label: 究极棱镜伤害倍率
-		Tooltip: uprisma 伤害 = gtprisma 伤害 × 此倍率
+		Tooltip: 究极棱镜的基础伤害倍率；额外行为已单独计入平衡
 	}
 
 	Headers: {
 		BaseStats: 基础属性
-		Phase1: 第一阶段
-		Phase2: 第二阶段
-		Phase3: 第三阶段
-		Phase4: 第四阶段
-		Phase5: 第五阶段
-		Phase6: 第六阶段
-		Phase7: 第七阶段
-		Phase8: 第八阶段
-		Phase9: 第九阶段
+		GrowthCurve: 成长曲线
+		PhaseCaps: 阶段伤害预算
 		UltraTerraprisma: 究极棱镜
 	}
 }

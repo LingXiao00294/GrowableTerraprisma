@@ -1,11 +1,12 @@
 using Terraria;
 using Terraria.ID;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Players;
 
 namespace GrowableTerraprisma.Behaviors.Vanilla
 {
     /// <summary>
-    /// 龙之怒 — 击败双足翼龙后解锁。目标生命值低于 50% 时 +10% 伤害。
+    /// 龙之怒 — 击败双足翼龙后解锁。目标生命值低于 50% 时 +8% 伤害。
     /// </summary>
     public class DragonsFuryBehavior : IUprismaBehavior
     {
@@ -24,7 +25,7 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
             float hpRatio = (float)target.life / target.lifeMax;
             if (hpRatio < 0.5f)
             {
-                modifiers.FinalDamage *= 1.1f;
+                modifiers.FinalDamage *= GrowthBalance.DragonsFuryDamageMultiplier;
             }
         }
     }

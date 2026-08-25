@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Content.Projectiles;
 using GrowableTerraprisma.Players;
 
@@ -42,19 +43,19 @@ namespace GrowableTerraprisma.Content.Buffs
                 Lighting.AddLight(player.Center, 0.6f, 0.5f, 0.9f);
             }
 
-            if (defeated.Contains(GrowableTerraprismaPlayer.Cal.SlimeGodCore))
+            if (GrowableTerraprismaPlayer.HasDefeatedSlimeGod(defeated))
             {
-                player.maxMinions += 1;
+                player.maxMinions += GrowthBalance.SlimeGodMinionSlots;
             }
 
             if (defeated.Contains(NPCID.QueenSlimeBoss))
             {
-                player.moveSpeed += 0.1f;
+                player.moveSpeed += GrowthBalance.QueenSlimeMoveSpeed;
             }
 
             if (defeated.Contains(NPCID.Plantera))
             {
-                player.lifeRegen += 5;
+                player.lifeRegen += GrowthBalance.PlanteraLifeRegen;
             }
         }
 
@@ -65,7 +66,7 @@ namespace GrowableTerraprisma.Content.Buffs
 
             if (defeated.Contains(NPCID.QueenBee))
                 tip += "\n" + Language.GetTextValue("Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.PassiveQueenBee");
-            if (defeated.Contains(GrowableTerraprismaPlayer.Cal.SlimeGodCore))
+            if (GrowableTerraprismaPlayer.HasDefeatedSlimeGod(defeated))
                 tip += "\n" + Language.GetTextValue("Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.PassiveSlimeGod");
             if (defeated.Contains(NPCID.WallofFlesh))
                 tip += "\n" + Language.GetTextValue("Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.PassiveWoF");

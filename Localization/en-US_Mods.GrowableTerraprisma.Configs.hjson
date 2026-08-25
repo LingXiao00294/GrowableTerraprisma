@@ -3,70 +3,68 @@ GrowableTerraprismaConfig: {
 
 	BaseDamage: {
 		Label: Base Damage
-		Tooltip: Starting weapon damage before Boss bonuses
+		Tooltip: Starting weapon damage before growth damage
 	}
 
-	Phase1Bonus: {
-		Label: Phase 1 Bonus
-		Tooltip: King Slime, EoC, EoW/BoC, Desert Scourge, Crabulon
+	BossGrowthRate: {
+		Label: Growth per Encounter
+		Tooltip: Share of the current phase's remaining damage budget gained from each valid Boss encounter; later kills have diminishing returns
 	}
 
-	Phase2Bonus: {
-		Label: Phase 2 Bonus
-		Tooltip: Queen Bee, Skeletron, Deerclops, WoF, Hive Mind/Perforators, Slime God
+	Phase1Cap: {
+		Label: Phase 1 Budget
+		Tooltip: Maximum growth damage from King Slime through the world evil Boss
 	}
 
-	Phase3Bonus: {
-		Label: Phase 3 Bonus
-		Tooltip: Queen Slime, Destroyer, Twins, Prime, Aquatic Scourge, Brimstone Elemental, Cryogen
+	Phase2Cap: {
+		Label: Phase 2 Budget
+		Tooltip: Maximum growth damage from Queen Bee through Wall of Flesh
 	}
 
-	Phase4Bonus: {
-		Label: Phase 4 Bonus
-		Tooltip: Plantera, Calamitas Clone, Leviathan/Anahita, Astrum Aureus
+	Phase3Cap: {
+		Label: Phase 3 Budget
+		Tooltip: Maximum growth damage from early Hardmode through the mechanical Bosses
 	}
 
-	Phase5Bonus: {
-		Label: Phase 5 Bonus
-		Tooltip: Golem, Duke Fishron, Empress of Light, Cultist, Moon Lord, Plaguebringer Goliath, Ravager, Astrum Deus
+	Phase4Cap: {
+		Label: Phase 4 Budget
+		Tooltip: Maximum growth damage from the Plantera tier
 	}
 
-	Phase6Bonus: {
-		Label: Phase 6 Bonus
-		Tooltip: Profaned Guardians, Dragonfolly, Providence
+	Phase5Cap: {
+		Label: Phase 5 Budget
+		Tooltip: Maximum growth damage from Golem through Moon Lord
 	}
 
-	Phase7Bonus: {
-		Label: Phase 7 Bonus
-		Tooltip: Storm Weaver, Ceaseless Void, Signus, Polterghast, Old Duke
+	Phase6Cap: {
+		Label: Phase 6 Budget
+		Tooltip: Maximum growth damage from the Profaned Guardians through Providence
 	}
 
-	Phase8Bonus: {
-		Label: Phase 8 Bonus
-		Tooltip: Devourer of Gods, Yharon
+	Phase7Cap: {
+		Label: Phase 7 Budget
+		Tooltip: Maximum growth damage from the Sentinels through Old Duke
 	}
 
-	Phase9Bonus: {
-		Label: Phase 9 Bonus
-		Tooltip: Exo Mechs, Supreme Calamitas, Primordial Wyrm
+	Phase8Cap: {
+		Label: Phase 8 Budget
+		Tooltip: Maximum growth damage from Devourer of Gods through Yharon
+	}
+
+	Phase9Cap: {
+		Label: Phase 9 Budget
+		Tooltip: Maximum growth damage from Exo Mechs, Supreme Calamitas, and Primordial Wyrm
 	}
 
 	UltraTerraprismaDamageMultiplier: {
 		Label: Ultra Terraprisma Damage Multiplier
-		Tooltip: uprisma damage = gtprisma damage x this value
+		Tooltip: Base damage multiplier for uprisma; its extra behaviors are balanced separately
 	}
 
 	Headers: {
 		BaseStats: Base Stats
-		Phase1: Phase 1
-		Phase2: Phase 2
-		Phase3: Phase 3
-		Phase4: Phase 4
-		Phase5: Phase 5
-		Phase6: Phase 6
-		Phase7: Phase 7
-		Phase8: Phase 8
-		Phase9: Phase 9
+		GrowthCurve: Growth Curve
+		PhaseCaps: Phase Damage Budgets
 		UltraTerraprisma: Ultra Terraprisma
 	}
 }

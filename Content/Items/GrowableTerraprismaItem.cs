@@ -14,7 +14,7 @@ namespace GrowableTerraprisma.Content.Items
 {
     public class GrowableTerraprismaItem : ModItem
     {
-        private const int VanillaBaseDamage = 15;
+        private const int VanillaBaseDamage = 10;
 
         public override void SetDefaults()
         {
@@ -41,7 +41,7 @@ namespace GrowableTerraprisma.Content.Items
         {
             var cfg = ModContent.GetInstance<GrowableTerraprismaConfig>();
             var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
-            damage.Base += cfg.BaseDamage - VanillaBaseDamage + growable.BossesBaseBonus;
+            damage.Base += cfg.BaseDamage - VanillaBaseDamage + growable.Growth.DamageBonus;
         }
 
         public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback)
@@ -85,9 +85,9 @@ namespace GrowableTerraprisma.Content.Items
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
             var growable = Main.LocalPlayer.GetModPlayer<GrowableTerraprismaPlayer>();
-            int bossBonus = growable.BossesBaseBonus;
+            var growth = growable.Growth;
 
-            if (bossBonus <= 0)
+            if (growth.DamageBonus <= 0)
                 return;
 
             // 用 GetWeaponDamage 获取含 ModifyWeaponDamage 的真实面板值
@@ -105,7 +105,7 @@ namespace GrowableTerraprisma.Content.Items
 
             tooltips.Add(new TooltipLine(Mod, "BossBonus",
                 Language.GetTextValue("Mods.GrowableTerraprisma.Items.GrowableTerraprismaItem.BossBonus",
-                    growable.defeatedBossTypes.Count, bossBonus)));
+                    growth.EncounterCount, growth.DamageBonus)));
         }
     }
 }

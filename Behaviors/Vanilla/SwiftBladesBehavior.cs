@@ -1,11 +1,12 @@
 using Terraria;
 using Terraria.ID;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Players;
 
 namespace GrowableTerraprisma.Behaviors.Vanilla
 {
     /// <summary>
-    /// 加速之刃 — 始终激活。玩家移动速度 +15%。
+    /// 加速之刃 — 始终激活。玩家移动速度 +10%。
     /// </summary>
     public class SwiftBladesBehavior : IUprismaBehavior
     {
@@ -21,7 +22,7 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
 
         public void UpdatePlayer(Player player)
         {
-            player.moveSpeed += 0.15f;
+            player.moveSpeed += GrowthBalance.SwiftBladesMoveSpeed;
         }
     }
 }

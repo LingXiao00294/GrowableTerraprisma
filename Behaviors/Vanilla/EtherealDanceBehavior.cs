@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Content.Projectiles;
 using GrowableTerraprisma.Players;
 
@@ -12,8 +13,6 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
     /// </summary>
     public class EtherealDanceBehavior : IUprismaBehavior
     {
-        private const int TrailInterval = 18; // 每 18 帧生成一次残影
-
         public string Name => "Mods.GrowableTerraprisma.Behaviors.EtherealDance";
         public string Description => "Mods.GrowableTerraprisma.Behaviors.EtherealDanceDescription";
 
@@ -35,11 +34,11 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
             if (ultra.EtherealDanceCooldown > 0)
                 return;
 
-            ultra.EtherealDanceCooldown = TrailInterval;
+            ultra.EtherealDanceCooldown = GrowthBalance.EtherealDanceInterval;
 
             if (proj.owner == Main.myPlayer)
             {
-                int trailDmg = (int)(proj.damage * 0.2f);
+                int trailDmg = (int)(proj.damage * GrowthBalance.EtherealDanceDamageScale);
                 var trail = Projectile.NewProjectileDirect(
                     proj.GetSource_FromThis(), proj.Center, Vector2.Zero,
                     ModContent.ProjectileType<EtherealDanceTrail>(), trailDmg, 0f, proj.owner);

@@ -1,11 +1,12 @@
 using Terraria;
 using Terraria.ID;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Players;
 
 namespace GrowableTerraprisma.Behaviors.Vanilla
 {
     /// <summary>
-    /// 星辰加护 — 击败月亮领主后解锁。最大召唤栏位 +2。
+    /// 星辰加护 — 击败月亮领主后解锁。最大召唤栏位 +1。
     /// </summary>
     public class StarAegisBehavior : IUprismaBehavior
     {
@@ -21,7 +22,7 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
 
         public void UpdatePlayer(Player player)
         {
-            player.maxMinions += 2;
+            player.maxMinions += GrowthBalance.StarAegisMinionSlots;
         }
     }
 }

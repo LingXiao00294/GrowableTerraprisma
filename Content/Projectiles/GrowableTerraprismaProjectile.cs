@@ -8,6 +8,7 @@ using Terraria.Graphics;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Content.Buffs;
 using GrowableTerraprisma.Players;
 using GrowableTerraprisma.Systems;
@@ -28,7 +29,6 @@ namespace GrowableTerraprisma.Content.Projectiles
         private const int FetchSearchStagger = 5;
 
         protected List<int> _blacklist = new();
-        protected int _lifeStealCounter;
 
         public bool FocusOnFetching = false;
 
@@ -119,7 +119,7 @@ namespace GrowableTerraprisma.Content.Projectiles
                 Projectile.localAI[2] -= 1f;
                 if (Projectile.localAI[2] <= 0f)
                 {
-                    Projectile.localAI[2] = 150f;
+                    Projectile.localAI[2] = GrowthBalance.BeeSpawnInterval;
                     // 首个召唤物，仅服务器/单人执行
                     if (Projectile.owner == Main.myPlayer)
                     {
@@ -132,7 +132,7 @@ namespace GrowableTerraprisma.Content.Projectiles
                         }
                         if (myIdx == 0)
                         {
-                            int beeDmg = (int)(Projectile.damage * 0.35);
+                            int beeDmg = (int)(Projectile.damage * GrowthBalance.BeeDamageScale);
                             var bee = Projectile.NewProjectileDirect(Projectile.GetSource_FromThis(), Projectile.Center,
                                 Vector2.Zero, ProjectileID.Bee, beeDmg, 2f, Projectile.owner);
                             bee.originalDamage = beeDmg;
@@ -695,10 +695,10 @@ namespace GrowableTerraprisma.Content.Projectiles
 
             if (growable.defeatedBossTypes.Contains(NPCID.WallofFlesh))
             {
-                _lifeStealCounter++;
-                if (_lifeStealCounter >= 10)
+                growable.lifeStealHitCounter++;
+                if (growable.lifeStealHitCounter >= GrowthBalance.LifeStealHitsPerHeal)
                 {
-                    _lifeStealCounter = 0;
+                    growable.lifeStealHitCounter = 0;
                     Player player = Main.player[Projectile.owner];
                     player.Heal(1);
                 }
@@ -708,11 +708,11 @@ namespace GrowableTerraprisma.Content.Projectiles
                 && growable.defeatedBossTypes.Contains(NPCID.Spazmatism))
             {
                 growable.miniPrismHitCounter++;
-                if (growable.miniPrismHitCounter >= 20)
+                if (growable.miniPrismHitCounter >= GrowthBalance.MiniPrismHitsPerShot)
                 {
                     growable.miniPrismHitCounter = 0;
                     Vector2 vel = Projectile.Center.DirectionTo(target.Center) * 12f;
-                    int miniDmg = (int)(Projectile.originalDamage * 0.4f);
+                    int miniDmg = (int)(Projectile.originalDamage * GrowthBalance.MiniPrismDamageScale);
                     var mini = Projectile.NewProjectileDirect(
                         Projectile.GetSource_OnHit(target), Projectile.Center, vel,
                         ModContent.ProjectileType<TwinMiniPrismProjectile>(), miniDmg, 2f, Projectile.owner,
@@ -728,7 +728,7 @@ namespace GrowableTerraprisma.Content.Projectiles
             var growable = Main.player[Projectile.owner].GetModPlayer<GrowableTerraprismaPlayer>();
             if (growable.defeatedBossTypes.Contains(NPCID.SkeletronPrime))
             {
-                modifiers.ArmorPenetration += 10;
+                modifiers.ArmorPenetration += GrowthBalance.SkeletronPrimeArmorPenetration;
             }
         }
 

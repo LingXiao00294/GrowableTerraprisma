@@ -1,14 +1,14 @@
 Items: {
 	GrowableTerraprismaItem: {
 		DisplayName: 可成长的泰拉棱镜
-		Tooltip: 每击败一种独特Boss，伤害提高
-		BossBonus: Boss击败: {0}（基础伤害 +{1}）
+		Tooltip: 击败Boss遭遇以填充各阶段的成长伤害预算
+		BossBonus: 已完成 {0} 场有效Boss遭遇（成长伤害 +{1}）
 	}
 
 	UltraTerraprismaItem: {
 		DisplayName: 究极泰拉棱镜
 		Tooltip: 可成长泰拉棱镜的究极形态\n继承全部成长能力，并拥有额外行为层
-		BossBonus: Boss击败: {0}（基础伤害 +{1}，成长倍率 ×{2}）
+		BossBonus: 已完成 {0} 场有效Boss遭遇（成长伤害 +{1}，究极倍率 ×{2}）
 	}
 }
 
@@ -16,14 +16,14 @@ Buffs: {
 	GrowableTerraprismaBuff: {
 		Description: 刃之女皇将为你而战
 		DisplayName: 可成长的泰拉棱镜
-		PassiveQueenBee: 蜂王派出了她的士兵
-		PassiveSlimeGod: 史莱姆之神与你同在
-		PassiveWoF: 血肉墙渴望鲜血
-		PassiveQueenSlime: 史莱姆皇后的祝福
+		PassiveQueenBee: 每3秒召唤一只造成25%伤害的工蜂
+		PassiveSlimeGod: 最大召唤栏位 +1
+		PassiveWoF: 发出强光；每累计30次命中回复1点生命
+		PassiveQueenSlime: 移动速度 +8%
 		PassiveDestroyer: 毁灭者渴望一切
-		PassiveTwins: 双子魔眼的凝视化作棱镜
-		PassivePrime: 机械骷髅王为你磨砺剑刃
-		PassivePlantera: 世纪之花带来了生命祝福
+		PassiveTwins: 每累计25次命中发射一枚30%伤害的微型棱镜
+		PassivePrime: 攻击获得8点护甲穿透
+		PassivePlantera: 生命回复 +2
 	}
 
 	UltraTerraprismaBuff: {
@@ -41,13 +41,13 @@ Projectiles: {
 
 Behaviors: {
 	SwiftBlades: 加速之刃
-	SwiftBladesDescription: 玩家移动速度 +15%
+	SwiftBladesDescription: 玩家移动速度 +10%
 	StarAegis: 星辰加护
-	StarAegisDescription: 最大召唤栏位 +2
+	StarAegisDescription: 最大召唤栏位 +1
 	RazorTyphoon: 利刃台风
-	RazorTyphoonDescription: 周期性向目标发射台风弹幕
+	RazorTyphoonDescription: 每2.5秒向目标发射一枚35%伤害的台风
 	EtherealDance: 以太之舞
-	EtherealDanceDescription: 召唤物留下造成伤害的残影轨迹
+	EtherealDanceDescription: 攻击时每0.5秒留下一个12%伤害的残影
 	DragonsFury: 龙之怒
-	DragonsFuryDescription: 目标生命值低于 50% 时 +10% 伤害
+	DragonsFuryDescription: 目标生命值低于50%时伤害 +8%
 }

@@ -14,7 +14,7 @@ namespace GrowableTerraprisma.Content.Items
 {
     public class UltraTerraprismaItem : ModItem
     {
-        private const int VanillaBaseDamage = 15;
+        private const int VanillaBaseDamage = 10;
 
         public override void SetDefaults()
         {
@@ -41,7 +41,7 @@ namespace GrowableTerraprisma.Content.Items
         {
             var cfg = ModContent.GetInstance<GrowableTerraprismaConfig>();
             var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
-            damage.Base += (cfg.BaseDamage + growable.BossesBaseBonus)
+            damage.Base += (cfg.BaseDamage + growable.Growth.DamageBonus)
                 * cfg.UltraTerraprismaDamageMultiplier
                 - VanillaBaseDamage;
         }
@@ -59,10 +59,10 @@ namespace GrowableTerraprisma.Content.Items
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
             var growable = Main.LocalPlayer.GetModPlayer<GrowableTerraprismaPlayer>();
-            int bossBonus = growable.BossesBaseBonus;
+            var growth = growable.Growth;
             var cfg = ModContent.GetInstance<GrowableTerraprismaConfig>();
 
-            if (bossBonus <= 0)
+            if (growth.DamageBonus <= 0)
                 return;
 
             int realDamage = (int)Main.LocalPlayer.GetWeaponDamage(Item);
@@ -79,7 +79,7 @@ namespace GrowableTerraprisma.Content.Items
 
             tooltips.Add(new TooltipLine(Mod, "BossBonus",
                 Language.GetTextValue("Mods.GrowableTerraprisma.Items.UltraTerraprismaItem.BossBonus",
-                    growable.defeatedBossTypes.Count, bossBonus, cfg.UltraTerraprismaDamageMultiplier)));
+                    growth.EncounterCount, growth.DamageBonus, cfg.UltraTerraprismaDamageMultiplier)));
         }
     }
 }

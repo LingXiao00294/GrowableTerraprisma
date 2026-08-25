@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using GrowableTerraprisma.Common.Balance;
 using GrowableTerraprisma.Content.Projectiles;
 using GrowableTerraprisma.Players;
 
@@ -12,8 +13,6 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
     /// </summary>
     public class RazorTyphoonBehavior : IUprismaBehavior
     {
-        private const int FireInterval = 120; // 每 2 秒（120 帧）触发一次
-
         public string Name => "Mods.GrowableTerraprisma.Behaviors.RazorTyphoon";
         public string Description => "Mods.GrowableTerraprisma.Behaviors.RazorTyphoonDescription";
 
@@ -46,7 +45,7 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
             if (ultra.RazorTyphoonCooldown > 0)
                 return;
 
-            ultra.RazorTyphoonCooldown = FireInterval;
+            ultra.RazorTyphoonCooldown = GrowthBalance.RazorTyphoonInterval;
 
             // 寻找攻击目标
             NPC target = null;
@@ -64,7 +63,7 @@ namespace GrowableTerraprisma.Behaviors.Vanilla
             if (target != null && proj.owner == Main.myPlayer)
             {
                 Vector2 vel = proj.Center.DirectionTo(target.Center) * 14f;
-                int typhoonDmg = (int)(proj.damage * 0.5f);
+                int typhoonDmg = (int)(proj.damage * GrowthBalance.RazorTyphoonDamageScale);
                 var typhoon = Projectile.NewProjectileDirect(
                     proj.GetSource_FromThis(), proj.Center, vel,
                     ProjectileID.Typhoon, typhoonDmg, 2f, proj.owner);
