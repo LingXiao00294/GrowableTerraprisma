@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<!-- Import tModLoader mod properties via WorkspaceInfo for tModLoaderSteamPath, then tMLMod.targets for DLL references -->
-	<Import Project="..\tModLoader\src\WorkspaceInfo.targets" />
-	<Import Project="$(tModLoaderSteamPath)\tMLMod.targets" />
+	<!-- Import the tModLoader properties and build targets generated for ModSources. -->
+	<Import Project="..\tModLoader.targets" />
 
 	<!-- General -->
 	<PropertyGroup>
