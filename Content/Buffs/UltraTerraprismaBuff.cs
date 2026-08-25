@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using GrowableTerraprisma.Behaviors;
 using GrowableTerraprisma.Content.Projectiles;
 using GrowableTerraprisma.Players;
 
@@ -20,10 +21,8 @@ namespace GrowableTerraprisma.Content.Buffs
             int projType = ModContent.ProjectileType<UltraTerraprismaProjectile>();
             var modPlayer = player.GetModPlayer<GrowableTerraprismaPlayer>();
 
-            if (player.ownedProjectileCounts[projType] > 0)
-            {
+            if (HasActiveMinion(player, projType))
                 modPlayer.ultraMinionActive = true;
-            }
 
             if (!modPlayer.ultraMinionActive)
             {
@@ -34,28 +33,22 @@ namespace GrowableTerraprisma.Content.Buffs
 
             player.buffTime[buffIndex] = 18000;
 
-            // --- uprisma 持有者能力（继承自 gtprisma） ---
             var defeated = modPlayer.defeatedBossTypes;
 
             if (defeated.Contains(NPCID.KingSlime))
-            {
                 Lighting.AddLight(player.Center, 0.6f, 0.5f, 0.9f);
-            }
 
             if (defeated.Contains(GrowableTerraprismaPlayer.Cal.SlimeGodCore))
-            {
                 player.maxMinions += 1;
-            }
 
             if (defeated.Contains(NPCID.QueenSlimeBoss))
-            {
                 player.moveSpeed += 0.1f;
-            }
 
             if (defeated.Contains(NPCID.Plantera))
-            {
                 player.lifeRegen += 5;
-            }
+
+            foreach (var behavior in UprismaBehaviorRegistry.GetUnlocked(modPlayer))
+                behavior.UpdatePlayer(player);
         }
 
         public override void ModifyBuffText(ref string buffName, ref string tip, ref int rare)
@@ -79,6 +72,27 @@ namespace GrowableTerraprisma.Content.Buffs
                 tip += "\n" + Language.GetTextValue("Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.PassivePrime");
             if (defeated.Contains(NPCID.Plantera))
                 tip += "\n" + Language.GetTextValue("Mods.GrowableTerraprisma.Buffs.GrowableTerraprismaBuff.PassivePlantera");
+
+            foreach (var behavior in UprismaBehaviorRegistry.GetUnlocked(growable))
+            {
+                tip += "\n" + Language.GetTextValue(behavior.Name) + "："
+                     + Language.GetTextValue(behavior.Description);
+            }
+        }
+
+        private static bool HasActiveMinion(Player player, int projType)
+        {
+            if (player.ownedProjectileCounts[projType] > 0)
+                return true;
+
+            for (int i = 0; i < Main.maxProjectiles; i++)
+            {
+                Projectile proj = Main.projectile[i];
+                if (proj.active && proj.owner == player.whoAmI && proj.type == projType)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

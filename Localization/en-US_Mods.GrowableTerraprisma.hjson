@@ -36,6 +36,18 @@ Projectiles: {
 	GrowableTerraprismaProjectile.DisplayName: Growable Terraprisma
 	UltraTerraprismaProjectile.DisplayName: Ultra Terraprisma
 	TwinMiniPrismProjectile.DisplayName: Twin Mini Prism Projectile
+	EtherealDanceTrail.DisplayName: Ethereal Afterimage
 }
 
-Recipes.UltraTerraprismaCondition: Requires Empress of Light defeated and growth points >= 200
+Behaviors: {
+	SwiftBlades: Swift Blades
+	SwiftBladesDescription: Player movement speed +15%
+	StarAegis: Star Aegis
+	StarAegisDescription: Max minion slots +2
+	RazorTyphoon: Razor Typhoon
+	RazorTyphoonDescription: Periodically fires typhoon projectiles at targets
+	EtherealDance: Ethereal Dance
+	EtherealDanceDescription: Summons leave behind damaging afterimage trails
+	DragonsFury: Dragon's Fury
+	DragonsFuryDescription: +10% damage when target HP is below 50%
+}

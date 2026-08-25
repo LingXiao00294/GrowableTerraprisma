@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using GrowableTerraprisma.Players;
 
@@ -10,18 +11,31 @@ namespace GrowableTerraprisma.Global
 
         public override void OnKill(NPC npc)
         {
-            if (!npc.boss)
-                return;
+            // 追踪 Boss 击败
+            if (npc.boss)
+            {
+                TrackDefeat(npc);
+            }
 
+            // 追踪特殊非 Boss NPC（双足翼龙 Betsy 无 npc.boss 标记但应被追踪）
+            if (npc.type == NPCID.DD2Betsy)
+            {
+                TrackDefeat(npc);
+            }
+        }
+
+        private static void TrackDefeat(NPC npc)
+        {
             int bossType = GetBossType(npc);
 
-            int buffType = ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>();
+            int gtBuff = ModContent.BuffType<Content.Buffs.GrowableTerraprismaBuff>();
+            int ultraBuff = ModContent.BuffType<Content.Buffs.UltraTerraprismaBuff>();
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player player = Main.player[i];
                 if (!player.active)
                     continue;
-                if (!player.HasBuff(buffType))
+                if (!player.HasBuff(gtBuff) && !player.HasBuff(ultraBuff))
                     continue;
                 if (!npc.playerInteraction[i])
                     continue;

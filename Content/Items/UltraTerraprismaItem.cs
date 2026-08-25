@@ -37,17 +37,13 @@ namespace GrowableTerraprisma.Content.Items
             Item.autoReuse = true;
         }
 
-        public override bool CanUseItem(Player player)
-        {
-            var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
-            return NPC.downedEmpressOfLight && growable.BossesBaseBonus >= 200;
-        }
-
         public override void ModifyWeaponDamage(Player player, ref StatModifier damage)
         {
             var cfg = ModContent.GetInstance<GrowableTerraprismaConfig>();
             var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
-            damage.Base += (int)((cfg.BaseDamage - VanillaBaseDamage + growable.BossesBaseBonus) * cfg.UltraTerraprismaDamageMultiplier);
+            damage.Base += (cfg.BaseDamage + growable.BossesBaseBonus)
+                * cfg.UltraTerraprismaDamageMultiplier
+                - VanillaBaseDamage;
         }
 
         public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback)

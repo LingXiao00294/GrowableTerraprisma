@@ -36,6 +36,18 @@ Projectiles: {
 	GrowableTerraprismaProjectile.DisplayName: 可成长的泰拉棱镜
 	UltraTerraprismaProjectile.DisplayName: 究极泰拉棱镜
 	TwinMiniPrismProjectile.DisplayName: 双子微型棱镜
+	EtherealDanceTrail.DisplayName: 以太残影
 }
 
-Recipes.UltraTerraprismaCondition: 已击败光之女皇且成长点数 ≥ 200
+Behaviors: {
+	SwiftBlades: 加速之刃
+	SwiftBladesDescription: 玩家移动速度 +15%
+	StarAegis: 星辰加护
+	StarAegisDescription: 最大召唤栏位 +2
+	RazorTyphoon: 利刃台风
+	RazorTyphoonDescription: 周期性向目标发射台风弹幕
+	EtherealDance: 以太之舞
+	EtherealDanceDescription: 召唤物留下造成伤害的残影轨迹
+	DragonsFury: 龙之怒
+	DragonsFuryDescription: 目标生命值低于 50% 时 +10% 伤害
+}

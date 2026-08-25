@@ -30,22 +30,21 @@
 - **渲染**: 移植原版 `EmpressBladeDrawer` 顶点条带拖尾 + `DrawProj_EmpressBlade` 精灵绘制（残影 + 辉光），使用 `GameShaders.Misc["EmpressBlade"]` 着色器和 `GetFairyQueenWeaponsColor()` 彩虹色调循环。
 - **buff 生命周期**: 采用灾厄 `CelestialAxeMinion` 模式 — 弹幕 AI 中 `player.AddBuff(buffType, 3600)` 续期，buff `Update()` 中检查 `ownedProjectileCounts` 维持 bool，`ResetEffects` 中重置 bool。
 - **成长**: 纯 Boss 击败伤害加成 — 击败 Boss 直接增加 `Item.damage`（通过 `ModifyWeaponDamage` 追加到计算基底，兼容重铸和装备加成）。无击杀点数，无阶段。
-- **成长数据**: 存储在 `GrowableTerraprismaPlayer`（ModPlayer）上。掉落、交易、死亡不丢失。
-- **合成解锁**: 玩家击败光之女皇 AND gtprisma 成长点数达到阈值后，解锁 uprisma 合成配方。
+- **成长数据**: 存储在 `GrowableTerraprismaPlayer`（ModPlayer）的 `defeatedBossTypes` 上。掉落、交易、死亡不丢失。
 
 ### 1.2  究极泰拉棱镜（uprisma）
 
 - **类名**: `UltraTerraprismaItem : ModItem`
 - **获取方式**: 在秘银/山铜砧处合成。
-  - 材料: 1× 原版泰拉棱镜（不消耗 gtprisma）
-  - 条件: `NPC.downedEmpressOfLight` AND 玩家成长点数达到阈值
+  - 材料: 1× 原版泰拉棱镜 + 1× gtprisma
+  - 无条件门槛
 - **基础属性**: 基础伤害约为原版泰拉棱镜的 1.3 倍。
-- **弹幕**: 自定义弹幕（`UltraTerraprismaProjectile : ModProjectile`）。
+- **弹幕**: 自定义弹幕（`UltraTerraprismaProjectile : GrowableTerraprismaProjectile`），复用 gtprisma 完整 AI_156 状态机，仅叠加行为钩子。
   - 原版 AI 复用：`Projectile.aiStyle = 156`，运动/索敌/环形排列全部复用原版 `AI_156_BatOfLight`
   - 行为叠加层在 `PostAI()` 中执行，不替换原版逻辑
   - 参考灾厄 `CelestialAxeMinion` 模式：buff 直接在弹幕 `AI()` 中 `AddBuff(3600)` 维持，比当前 gtprisma 的 `GlobalProjectile.PostAI` 更干净
 - **与 gtprisma 对比**：gtprisma 侧重功能性成长（光照、拾取、移速），uprisma 侧重战斗行为成长（台风弹幕、残影、debuff）。两者都是自有 `ModProjectile`，互不依赖
-- **数值成长**: 继承并继续 gtprisma 的数值成长（击杀计数 + Boss 击败计数转移至 uprisma）。uprisma 自身继续累积。
+- **数值成长**: 继承并继续 gtprisma 的 Boss 击败记录（`defeatedBossTypes` 共享于 ModPlayer，与持有哪把武器无关）。uprisma 使用同一套 `BossesBaseBonus` 并乘以伤害倍率。
 - **行为成长**: 击败**特定 Boss**解锁对应 AI 行为（见 §3）。行为是原版 AI 的**叠加层**，不替换原版逻辑。
 
 ---
@@ -89,16 +88,21 @@
 
 ### 2.2  实现
 
-**Boss 击败** — `GrowableTerraprismaGlobalNPC.OnKill`：遍历玩家，持 gtprisma buff + `npc.playerInteraction[i]` + `npc.boss` → 加入 `defeatedBossTypes`。
+**Boss 击败** — `GrowableTerraprismaGlobalNPC.OnKill`：遍历玩家，持 gtprisma 或 uprisma buff + `npc.playerInteraction[i]` + `npc.boss`（或 Betsy）→ 加入 `defeatedBossTypes`。
 
 **伤害计算** — `GrowableTerraprismaItem.ModifyWeaponDamage()`：`damage.Base += BossesBaseBonus`。追加到基底（prefix 和装备加成之前），兼容重铸系统。每秒仅 Boss 击败时触发，无每帧开销。
 
 **面板修正** — `ModifyTooltips`：通过 `player.GetWeaponDamage(Item)` 获取真实有效伤害，替换原版 Damage tooltip 行显示修正后数值。
 
 **buff-弹幕生命周期**（灾厄 `CelestialAxeMinion` 模式）：
-- `GrowableTerraprismaBuff.Update()` — `ownedProjectileCounts[type] > 0` → 设 `growableMinionActive = true`，`buffTime = 18000`；否则 `DelBuff`
-- `GrowableTerraprismaPlayer.ResetEffects()` — `growableMinionActive = false`
-- `GrowableTerraprismaProjectile.AI()` — `player.AddBuff(buffType, 3600)`；`!growableMinionActive` → 弹幕死亡
+- `GrowableTerraprismaBuff.Update()` / `UltraTerraprismaBuff.Update()` — `ownedProjectileCounts[type] > 0` → 设 `growableMinionActive` / `ultraMinionActive = true`，`buffTime = 18000`；否则 `DelBuff`
+- `GrowableTerraprismaPlayer.ResetEffects()` — 两个 bool 均重置为 `false`
+- `GrowableTerraprismaProjectile.AI()` — `player.AddBuff(buffType, 3600)`；`growableMinionActive` 时续命
+- `UltraTerraprismaProjectile` — 继承 `GrowableTerraprismaProjectile`；`ShouldKeepAlive` 由 Buff 设置的 `ultraMinionActive` 驱动，支持右键取消召唤；`AfterThink` 调度行为 AI
+- `GrowableTerraprismaSystem.PostSetupContent` — 向 SummonersAssociation 注册 `AddMinionInfo` + `AddPersistentBuff`（避免索敌时被错误处理）
+- `UprismaBehaviorRegistry` — 仅在 `OnModLoad` 注册、`OnModUnload` 清理（不在 `OnWorldUnload` 清空，防止重进世界后行为丢失）
+- `StartAttack()` — 写入 `localAI[0/1] = Center`，防止冲刺阶段使用未初始化的弧线起点而瞬移到世界原点
+- 行为冷却存储在每个 `UltraTerraprismaProjectile` 实例字段中，不占用固定长度的 `localAI[0/1/2]`
 
 **被动能力注入点**：
 - **持有者能力**（发光、+1 栏位、移速）→ `GrowableTerraprismaBuff.Update()`，在生命周期维护后、`buffTime` 续期后执行
@@ -150,14 +154,11 @@ uprisma 始终以**原版 EmpressBlade AI 为基础**运行。行为是**叠加�
 ```csharp
 public interface IUprismaBehavior
 {
-    /// 行为名称（在 tooltip 中显示）。
+    /// 行为名称（本地化键）。
     string Name { get; }
 
-    /// Tooltip 描述。
+    /// 行为描述（本地化键）。
     string Description { get; }
-
-    /// 解锁此行为所需的 Boss NPC type ID。-1 表示始终激活。
-    int RequiredBossNPCType { get; }
 
     /// 给定玩家是否已解锁此行为。
     bool IsUnlocked(GrowableTerraprismaPlayer player);
@@ -169,7 +170,16 @@ public interface IUprismaBehavior
     /// 每帧 AI 逻辑。在原版 BatOfLight AI 之后执行。
     void AI(Projectile proj);
 
-    /// 可选：在原版 EmpressBlade 渲染前后的自定义绘制。
+    /// 持有者增益，在 Buff.Update 中调用。用于移速、栏位等。
+    void UpdatePlayer(Player player) { }
+
+    /// 在弹幕命中 NPC 时调用。
+    void OnHitNPC(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone) { }
+
+    /// 在弹幕命中 NPC 前，修改命中参数。
+    void ModifyHitNPC(Projectile proj, NPC target, ref NPC.HitModifiers modifiers) { }
+
+    /// 在原版 EmpressBlade 渲染前后。
     void OnPreDraw(Projectile proj) { }
     void OnPostDraw(Projectile proj) { }
 }
@@ -234,7 +244,7 @@ Mod.Call("GrowableTerraprisma", "RegisterBehavior", new MyCustomBehavior());
 - **击败追踪**: 我们的 mod 通过 `GlobalNPC.OnKill` 独立追踪 Boss 击杀 — 该钩子无论 NPC 来自哪个 mod 都会触发。因此灾厄 Boss 被 gtprisma/uprisma 杀死后自动计入，无需特殊集成。
 - **行为解锁判定**: `RequiredBossNPCType` 存储 NPC type ID。当灾厄未加载时，对应 type ID 为 -1，`IsUnlocked` 永远返回 false，行为不可用。
 - **多体节 Boss**: 虫类 Boss（荒漠灾虫、神明吞噬者等）仅计一次击杀 — 通过只在 `bossArrayNPC` 中记录头部体节来去重。
-- **行为数量**: 仅 8 个灾厄关键剧情 Boss 分配行为，其余灾厄 Boss 与所有普通 Boss 一样仅贡献数值成长（+25 成长点数）。
+- **行为数量**: 仅 8 个灾厄关键剧情 Boss 分配行为，其余灾厄 Boss 与所有普通 Boss 一样仅贡献数值成长（阶段五 +25 基础伤害等）。
 
 ---
 
@@ -248,9 +258,8 @@ Mod.Call("GrowableTerraprisma", "RegisterBehavior", new MyCustomBehavior());
   ▼
 前期 → 困难模式前 → 困难模式 → 月球领主后
   │                                    │
-  │  gtprisma 纯 Boss 基础伤害成长       │  击败光之女皇 → 获得 vprisma
-  │  （击败 Boss → Item.damage 增加）    │  合成 uprisma（vprisma + gtprisma）
-  │                                    │  gtprisma 保留在背包中
+  │  gtprisma 纯 Boss 基础伤害成长       │  获得 vprisma 后在砧合成 uprisma
+  │  （击败 Boss → 基础伤害加成累加）     │  （vprisma + gtprisma，无额外门槛）
   │                                    ▼
   │                              uprisma 阶段：
   │                              Boss 数值继续成长 +
@@ -307,9 +316,8 @@ public class GrowableTerraprismaPlayer : ModPlayer
 ### 6.1  究极泰拉棱镜（uprisma）
 
 - **合成站**: 秘银砧 / 山铜砧
-- **材料**: 1× 原版泰拉棱镜
-- **消耗方式**: 合成时不消耗 gtprisma，仅消耗原版泰拉棱镜。gtprisma 保留在背包中继续使用或后续升级。
-- **条件**: `NPC.downedEmpressOfLight` AND gtprisma 成长点数 ≥ 200（可配置）
+- **材料**: 1× 原版泰拉棱镜 + 1× gtprisma
+- **条件**: 无
 
 ---
 
@@ -353,7 +361,7 @@ GrowableTerraprisma/
 │   │   └── UltraTerraprismaItem.cs             # uprisma — 合成品，自定义弹幕
 │   ├── Projectiles/
 │   │   ├── GrowableTerraprismaProjectile.cs    # gtprisma 召唤物：完整移植原版 AI + 渲染
-│   │   └── UltraTerraprismaProjectile.cs       # uprisma 召唤物：原版 AI + 行为层
+│   │   └── UltraTerraprismaProjectile.cs       # uprisma 召唤物：继承 gtprisma AI + 行为层
 │   └── Buffs/
 │       └── GrowableTerraprismaBuff.cs          # 召唤栏 buff（灾厄更新模式）
 ├── Players/
@@ -408,7 +416,7 @@ Boss 层级判定：`GrowableTerraprismaPlayer.GetBossBonus()` 按 `IsPhase1Boss
 | 阶段 | 范围                                                      | 涉及文件                                    |
 |----- |---------------------------------------------------------- |------------------------------------------- |
 | 1    | gtprisma 物品（初始物品，原版弹幕）+ ModPlayer               | GrowableTerraprismaItem.cs, GrowableTerraprismaPlayer.cs |
-| 2    | 击杀计数 + Boss 击败追踪（GlobalProjectile + GlobalNPC）    | GrowableTerraprismaGlobalProjectile.cs, GrowableTerraprismaGlobalNPC.cs |
+| 2    | Boss 击败追踪（GlobalNPC）                                  | GrowableTerraprismaGlobalNPC.cs |
 | 3    | 数值成长（伤害缩放）+ tooltip                              | GrowableTerraprismaItem.cs, GrowableTerraprismaPlayer.cs |
 | 4    | gtprisma 自定义弹幕移植（ModProjectile 完整 AI + 渲染）     | GrowableTerraprismaProjectile.cs, GrowableTerraprismaBuff.cs（重构） |
 | 5    | gtprisma 功能性成长（8 Boss 被动能力）                      | GrowableTerraprismaPlayer.cs, GrowableTerraprismaProjectile.cs |
@@ -424,8 +432,7 @@ Boss 层级判定：`GrowableTerraprismaPlayer.GetBossBonus()` 按 `IsPhase1Boss
 | # | 问题 | 决策 |
 |---|------|------|
 | 1 | **数值机制** | 纯 Boss 基础伤害加成，直接叠加到 `Item.damage`。无击杀点数、无倍率公式、无迷你 Boss 追踪，保持简单可控。 |
-| 2 | **gtprisma 消耗** | 合成 uprisma 时**保留** gtprisma，仅消耗原版泰拉棱镜。 |
+| 2 | **uprisma 合成** | 秘银砧，消耗 1×原版泰拉棱镜 + 1×gtprisma，无条件门槛。 |
 | 3 | **重铸** | 支持。`Item.damage` 保持原值，Boss 加成通过 `ModifyWeaponDamage.Base` 追加，不破坏前缀。 |
 | 4 | **多人模式** | 确保兼容，击杀追踪走持有者自身即可。 |
 | 5 | **灾厄行为数量** | 仅 8 个关键剧情 Boss 解锁行为（硫火之灵→至尊灾厄），其余仅贡献数值成长。 |
-

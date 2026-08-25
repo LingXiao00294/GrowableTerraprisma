@@ -136,13 +136,14 @@ namespace GrowableTerraprisma.Players
             || CalResolve.Is(t, Cal.Anahita)
             || CalResolve.Is(t, Cal.AstrumAureus);
 
-        // Phase 5: 石巨人、瘟疫使者歌莉娅、猪龙鱼公爵、光之女皇、毁灭魔像、拜月教徒、星神游龙、月亮领主
+        // Phase 5: 石巨人、瘟疫使者歌莉娅、猪龙鱼公爵、光之女皇、毁灭魔像、拜月教徒、星神游龙、月亮领主、双足翼龙
         private static bool IsPhase5Boss(int t) =>
             t == NPCID.Golem
             || t == NPCID.DukeFishron
             || t == NPCID.HallowBoss
             || t == NPCID.CultistBoss
             || t == NPCID.MoonLordCore
+            || t == NPCID.DD2Betsy
             || CalResolve.Is(t, Cal.PlaguebringerGoliath)
             || CalResolve.Is(t, Cal.RavagerBody)
             || CalResolve.Is(t, Cal.AstrumDeusHead);

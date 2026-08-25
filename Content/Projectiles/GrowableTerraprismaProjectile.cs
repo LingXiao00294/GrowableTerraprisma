@@ -16,21 +16,31 @@ namespace GrowableTerraprisma.Content.Projectiles
 {
     public class GrowableTerraprismaProjectile : ModProjectile
     {
-        private const int AttackTimerStart = 40;
-        private const int AttackTimerEnd = 80;
-        private const int ApproachThreshold = AttackTimerStart + 1;
-        private const int ApproachMax = AttackTimerStart - 1;
-        private const int DashMax = AttackTimerEnd - 1;
+        protected const int AttackTimerStart = 40;
+        protected const int AttackTimerEnd = 80;
+        protected const int ApproachThreshold = AttackTimerStart + 1;
+        protected const int ApproachMax = AttackTimerStart - 1;
+        protected const int DashMax = AttackTimerEnd - 1;
 
-        private const int FetchApproachState = -2;
-        private const int FetchReturnState = -3;
+        protected const int FetchApproachState = -2;
+        protected const int FetchReturnState = -3;
         private const int FetchSearchInterval = 120;
         private const int FetchSearchStagger = 5;
 
-        private List<int> _blacklist = new();
-        private int _lifeStealCounter;
+        protected List<int> _blacklist = new();
+        protected int _lifeStealCounter;
 
         public bool FocusOnFetching = false;
+
+        protected virtual int MinionBuffType => ModContent.BuffType<GrowableTerraprismaBuff>();
+
+        protected virtual bool ShouldKeepAlive(GrowableTerraprismaPlayer prismaPlayer) =>
+            prismaPlayer.growableMinionActive;
+
+        protected virtual void OnOwnerDead(GrowableTerraprismaPlayer prismaPlayer) =>
+            prismaPlayer.growableMinionActive = false;
+
+        protected virtual void AfterThink(Player player) { }
 
         public override void SetStaticDefaults()
         {
@@ -86,14 +96,14 @@ namespace GrowableTerraprisma.Content.Projectiles
             Player player = Main.player[Projectile.owner];
             var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
 
-            player.AddBuff(ModContent.BuffType<GrowableTerraprismaBuff>(), 3600);
+            player.AddBuff(MinionBuffType, 3600);
 
             if (player.dead)
             {
-                growable.growableMinionActive = false;
+                OnOwnerDead(growable);
             }
 
-            if (growable.growableMinionActive)
+            if (ShouldKeepAlive(growable))
             {
                 Projectile.timeLeft = 2;
             }
@@ -134,9 +144,10 @@ namespace GrowableTerraprisma.Content.Projectiles
 
             _blacklist.Clear();
             AI_156_Think(player, _blacklist);
+            AfterThink(player);
         }
 
-        private void AI_156_Think(Player player, List<int> blacklist)
+        protected void AI_156_Think(Player player, List<int> blacklist)
         {
             var growable = player.GetModPlayer<GrowableTerraprismaPlayer>();
             bool fetchUnlocked = growable.defeatedBossTypes.Contains(NPCID.TheDestroyer);
@@ -504,6 +515,8 @@ namespace GrowableTerraprisma.Content.Projectiles
         private void StartAttack()
         {
             Projectile.ResetLocalNPCHitImmunity();
+            Projectile.localAI[0] = Projectile.Center.X;
+            Projectile.localAI[1] = Projectile.Center.Y;
         }
 
         private int TryAttackingNPCs(Player player, List<int> blacklist, bool skipBodyCheck = false)
@@ -578,9 +591,14 @@ namespace GrowableTerraprisma.Content.Projectiles
             idleRotation += (float)Math.PI / 2f;
         }
 
+        protected virtual void OnBeforeDraw(Player player) { }
+
+        protected virtual void OnAfterDraw(Player player) { }
+
         public override bool PreDraw(ref Color lightColor)
         {
             Player player = Main.player[Projectile.owner];
+            OnBeforeDraw(player);
             DrawTrail(player);
 
             // EmpressBladeDrawer 通过 ShaderData.Apply() 将 SpriteBatch 切到 Immediate 模式，
@@ -591,10 +609,11 @@ namespace GrowableTerraprisma.Content.Projectiles
                 Main.Rasterizer, null, Main.GameViewMatrix.TransformationMatrix);
 
             DrawSprite(player);
+            OnAfterDraw(player);
             return false;
         }
 
-        private void DrawTrail(Player player)
+        protected void DrawTrail(Player player)
         {
             EmpressBladeDrawer drawer = default;
             float timeFactor = Main.GlobalTimeWrappedHourly % 3f / 3f;
@@ -609,7 +628,7 @@ namespace GrowableTerraprisma.Content.Projectiles
             drawer.Draw(Projectile);
         }
 
-        private void DrawSprite(Player player)
+        protected void DrawSprite(Player player)
         {
             float timeFactor = Main.GlobalTimeWrappedHourly % 3f / 3f;
             float maxMinions = MathHelper.Max(1f, player.maxMinions);
@@ -667,7 +686,7 @@ namespace GrowableTerraprisma.Content.Projectiles
             return true;
         }
 
-        public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
+        protected virtual void OnPassiveHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
             if (Projectile.owner != Main.myPlayer)
                 return;
@@ -704,7 +723,7 @@ namespace GrowableTerraprisma.Content.Projectiles
             }
         }
 
-        public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
+        protected virtual void OnPassiveModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
         {
             var growable = Main.player[Projectile.owner].GetModPlayer<GrowableTerraprismaPlayer>();
             if (growable.defeatedBossTypes.Contains(NPCID.SkeletronPrime))
@@ -712,6 +731,12 @@ namespace GrowableTerraprisma.Content.Projectiles
                 modifiers.ArmorPenetration += 10;
             }
         }
+
+        public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) =>
+            OnPassiveHitNPC(target, hit, damageDone);
+
+        public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers) =>
+            OnPassiveModifyHitNPC(target, ref modifiers);
 
         /// <summary>
         /// 精灵残影拖尾 — 遍历 oldPos/oldRot 绘制渐进透明精灵副本。
